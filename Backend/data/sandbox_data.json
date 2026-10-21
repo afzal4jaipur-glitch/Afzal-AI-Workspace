@@ -1,0 +1,342 @@
+{
+  "emails": [
+    {
+      "id": "msg_101",
+      "threadId": "th_101",
+      "from": "Elena Rostova <elena.rostova@ai-summit.org>",
+      "to": "me@workspace.ai",
+      "subject": "Upcoming AI Workshop & Hands-on Agenda",
+      "date": "2026-10-14T14:21:16.025Z",
+      "snippet": "Hi! Following up on our workshop schedule for next week. Please prepare the initial workshop notes on Agentic AI and let me know if we need a sync tomorrow at 11 AM...",
+      "body": "Hi there,\n\nFollowing up on our upcoming workshop on Agentic AI next week. We are expecting over 80 developers and product leads. \n\nCould you please prepare an initial document titled 'AI Workshop Notes' covering the core fundamentals of Agentic AI, autonomous tool execution, and MCP protocols? Also, let me know if we need a quick prep sync tomorrow at 11:00 AM.\n\nLooking forward to your notes!\n\nBest regards,\nElena Rostova\nHead of Developer Relations, AI Summit",
+      "labels": [
+        "INBOX",
+        "IMPORTANT"
+      ],
+      "importance": "High",
+      "isRead": false
+    },
+    {
+      "id": "msg_102",
+      "threadId": "th_102",
+      "from": "Alex Rivera <alex.rivera@techcorp.io>",
+      "to": "me@workspace.ai",
+      "subject": "URGENT: Production Deployment Checklist & Security Audit",
+      "date": "2026-10-14T13:06:16.026Z",
+      "snippet": "Team, we need all engineering leads to review the final checklist for the Q3 release before 4 PM today. Critical items: MCP server auth and API key rotation...",
+      "body": "Team,\n\nWe are gearing up for the v2.4 production deployment scheduled for this Thursday at 18:00 UTC. \n\nPlease review the final security audit checklist before 4 PM today:\n1. Verify MCP server token isolation and sandboxing\n2. Rotate external API credentials (Gemini, Tavily)\n3. Confirm database failover readiness\n\nIf any blockers arise, flag them in the #release channel immediately.\n\nThanks,\nAlex Rivera\nPrincipal Infrastructure Architect",
+      "labels": [
+        "INBOX",
+        "IMPORTANT"
+      ],
+      "importance": "High",
+      "isRead": false
+    },
+    {
+      "id": "msg_103",
+      "threadId": "th_103",
+      "from": "Sarah Chen <sarah.chen@innovate.co>",
+      "to": "me@workspace.ai",
+      "subject": "Quarterly Budget Planning & Cloud Credits Allocation",
+      "date": "2026-10-14T09:06:16.026Z",
+      "snippet": "Here is the summary draft for the Q4 infrastructure budget. We received an extra $25k in cloud credits for the new agentic AI workloads...",
+      "body": "Hi,\n\nGreat news! The cloud provider approved our application for an additional $25,000 in credits dedicated to our agentic workflows and LLM fine-tuning pilots.\n\nAttached in Drive is the breakdown. Please review the allocation across inference GPUs and vector databases before our financial sync on Wednesday.\n\nCheers,\nSarah Chen\nVP of Product & Strategy",
+      "labels": [
+        "INBOX",
+        "FINANCE"
+      ],
+      "importance": "High",
+      "isRead": true
+    },
+    {
+      "id": "msg_104",
+      "threadId": "th_104",
+      "from": "GitHub Notifications <notifications@github.com>",
+      "to": "me@workspace.ai",
+      "subject": "[modelcontextprotocol/sdk] New release v1.4.0 published",
+      "date": "2026-10-13T17:06:16.026Z",
+      "snippet": "Release v1.4.0 includes enhanced schema validation, stdio streaming improvements, and native error boundaries for client tools...",
+      "body": "modelcontextprotocol / sdk v1.4.0 is now live.\n\nKey highlights:\n- Enhanced JSON Schema validation for tool parameter parsing\n- Zero-copy stream decoding for faster tool execution\n- Native support for dynamic tool registration during session handshake\n\nView full release notes on GitHub.",
+      "labels": [
+        "INBOX",
+        "UPDATES"
+      ],
+      "importance": "Normal",
+      "isRead": true
+    },
+    {
+      "id": "msg_105",
+      "threadId": "th_105",
+      "from": "Google Cloud Support <cloud-noreply@google.com>",
+      "to": "me@workspace.ai",
+      "subject": "Monthly Billing Statement & API Quotas Summary",
+      "date": "2026-10-13T09:06:16.026Z",
+      "snippet": "Your monthly invoice for Google Workspace and Cloud APIs is now available. Total usage remains well within the tier...",
+      "body": "Hello Workspace Admin,\n\nYour Google Cloud & Workspace invoice for the previous billing cycle is ready.\n\nCurrent Summary:\n- Gmail API Requests: 4,820 / 1,000,000 quota\n- Google Docs API Requests: 1,350 / 500,000 quota\n- Total Charge: $0.00 (within free promotional credits)\n\nAccess your billing dashboard at console.cloud.google.com/billing.",
+      "labels": [
+        "INBOX",
+        "BILLING"
+      ],
+      "importance": "Normal",
+      "isRead": true
+    },
+    {
+      "id": "msg_106",
+      "threadId": "th_106",
+      "from": "Marcus Brody <m.brody@ventures.com>",
+      "to": "me@workspace.ai",
+      "subject": "Coffee chat / Partnership discussion next week?",
+      "date": "2026-10-12T13:06:16.026Z",
+      "snippet": "Great meeting you at the meetup. Would love to grab 15 minutes next week to explore how we can collaborate...",
+      "body": "Hi,\n\nIt was really insightful hearing your perspective on agentic workflows and MCP servers at the developer meetup last week.\n\nIf you have 15-20 minutes sometime next Tuesday or Thursday, I'd love to buy you coffee and discuss how we might collaborate on upcoming AI initiatives.\n\nBest,\nMarcus",
+      "labels": [
+        "INBOX"
+      ],
+      "importance": "Low",
+      "isRead": true
+    }
+  ],
+  "docs": [
+    {
+      "documentId": "doc_1791998077390_672",
+      "title": "AI Workshop Notes",
+      "createdTime": "2026-10-14T17:14:37.390Z",
+      "modifiedTime": "2026-10-14T17:14:37.390Z",
+      "content": "# AI Workshop Notes\n\n## Executive Summary\nThis document provides a comprehensive overview of **Agentic AI**, architectural foundations, autonomous tool use, and the **Model Context Protocol (MCP)** for building personalized workspace assistants.\n\n---\n\n## 1. Fundamentals of Agentic AI\nUnlike traditional conversational chatbots that merely generate textual answers, **Agentic AI systems** are goal-driven autonomous entities endowed with:\n- **Perception & State Awareness**: Ingesting environment context, user intent, and real-time state.\n- **Reasoning & Planning**: Decomposing high-level user goals into structured multi-step execution plans.\n- **Autonomous Tool Execution**: Safely invoking external APIs (Gmail, Google Docs, Calendar, databases) to read, mutate, and create resources.\n- **Feedback & Self-Correction**: Evaluating execution outcomes and dynamically adjusting subsequent steps if errors occur.\n\n---\n\n## 2. Core Pillars of an Agentic Architecture\n1. **The LLM Core (Brain)**: Evaluates instructions, chooses functions, and synthesizes answers (e.g., Google Gemini 2.0).\n2. **Standardized Protocol (MCP)**: Decouples LLM agents from application-specific APIs via JSON-RPC 2.0 schemas.\n3. **Execution Sandbox**: Provides controlled authorization boundaries and state persistence for tools.\n4. **Context Window Management**: Efficiently compresses tool results, email threads, and document revisions into the LLM context.\n\n---\n\n## 3. The Role of Model Context Protocol (MCP)\nThe **Model Context Protocol (MCP)**, initiated by Anthropic and adopted industry-wide, standardizes how AI assistants interface with tools and data sources:\n- **Uniform Tool Discovery**: `tools/list` exposes tool signatures, argument types, and descriptions.\n- **Deterministic Tool Calling**: `tools/call` enforces structured input validation with JSON Schema / Zod.\n- **Transport Agnostic**: Works interchangeably across Stdio, Server-Sent Events (SSE), and In-Memory linked pipes.\n\n---\n\n## 4. Next Steps for Workshop Attendees\n- [x] Configure Gmail MCP server for inbox triage\n- [x] Integrate Google Docs MCP server for automated note generation\n- [ ] Connect Google Calendar MCP server to schedule prep syncs\n- [ ] Connect Tavily search for dynamic web intelligence\n\n*Generated by Afzal's Personal AI Space*\n*Date: 10/14/2026 | Document ID: Generated via MCP*"
+    },
+    {
+      "documentId": "doc_1791997399260_684",
+      "title": "AI Workshop Notes",
+      "createdTime": "2026-10-14T17:03:19.260Z",
+      "modifiedTime": "2026-10-14T17:03:19.260Z",
+      "content": "# AI Workshop Notes\n\n## Executive Summary\nThis document provides a comprehensive overview of **Agentic AI**, architectural foundations, autonomous tool use, and the **Model Context Protocol (MCP)** for building personalized workspace assistants.\n\n---\n\n## 1. Fundamentals of Agentic AI\nUnlike traditional conversational chatbots that merely generate textual answers, **Agentic AI systems** are goal-driven autonomous entities endowed with:\n- **Perception & State Awareness**: Ingesting environment context, user intent, and real-time state.\n- **Reasoning & Planning**: Decomposing high-level user goals into structured multi-step execution plans.\n- **Autonomous Tool Execution**: Safely invoking external APIs (Gmail, Google Docs, Calendar, databases) to read, mutate, and create resources.\n- **Feedback & Self-Correction**: Evaluating execution outcomes and dynamically adjusting subsequent steps if errors occur.\n\n---\n\n## 2. Core Pillars of an Agentic Architecture\n1. **The LLM Core (Brain)**: Evaluates instructions, chooses functions, and synthesizes answers (e.g., Google Gemini 2.0).\n2. **Standardized Protocol (MCP)**: Decouples LLM agents from application-specific APIs via JSON-RPC 2.0 schemas.\n3. **Execution Sandbox**: Provides controlled authorization boundaries and state persistence for tools.\n4. **Context Window Management**: Efficiently compresses tool results, email threads, and document revisions into the LLM context.\n\n---\n\n## 3. The Role of Model Context Protocol (MCP)\nThe **Model Context Protocol (MCP)**, initiated by Anthropic and adopted industry-wide, standardizes how AI assistants interface with tools and data sources:\n- **Uniform Tool Discovery**: `tools/list` exposes tool signatures, argument types, and descriptions.\n- **Deterministic Tool Calling**: `tools/call` enforces structured input validation with JSON Schema / Zod.\n- **Transport Agnostic**: Works interchangeably across Stdio, Server-Sent Events (SSE), and In-Memory linked pipes.\n\n---\n\n## 4. Multi-Application Workflow Example\n```mermaid\nflowchart LR\n    A[User Prompt] --> B[Gemini Planner]\n    B -->|MCP Call 1| C[Gmail: List & Summarize]\n    C -->|Context| B\n    B -->|MCP Call 2| D[Docs: Create & Insert Notes]\n    D -->|Doc ID| B\n    B -->|MCP Call 3| E[Calendar: Schedule Sync]\n    E -->|Confirmation| F[Final Unified Response]\n```\n\n---\n\n## 5. Next Steps for Workshop Attendees\n- [x] Configure Gmail MCP server for inbox triage\n- [x] Integrate Google Docs MCP server for automated note generation\n- [ ] Connect Google Calendar MCP server to schedule prep syncs\n- [ ] Connect Tavily search for dynamic web intelligence\n\n*Generated automatically by MCP Personal AI Workspace*\n*Date: 10/14/2026 | Document ID: Generated via MCP*"
+    },
+    {
+      "documentId": "doc_1791994999958_116",
+      "title": "AI Workshop Notes",
+      "createdTime": "2026-10-14T16:23:19.958Z",
+      "modifiedTime": "2026-10-14T16:23:19.958Z",
+      "content": "# AI Workshop Notes\n\n## Executive Summary\nThis document provides a comprehensive overview of **Agentic AI**, architectural foundations, autonomous tool use, and the **Model Context Protocol (MCP)** for building personalized workspace assistants.\n\n---\n\n## 1. Fundamentals of Agentic AI\nUnlike traditional conversational chatbots that merely generate textual answers, **Agentic AI systems** are goal-driven autonomous entities endowed with:\n- **Perception & State Awareness**: Ingesting environment context, user intent, and real-time state.\n- **Reasoning & Planning**: Decomposing high-level user goals into structured multi-step execution plans.\n- **Autonomous Tool Execution**: Safely invoking external APIs (Gmail, Google Docs, Calendar, databases) to read, mutate, and create resources.\n- **Feedback & Self-Correction**: Evaluating execution outcomes and dynamically adjusting subsequent steps if errors occur.\n\n---\n\n## 2. Core Pillars of an Agentic Architecture\n1. **The LLM Core (Brain)**: Evaluates instructions, chooses functions, and synthesizes answers (e.g., Google Gemini 2.0).\n2. **Standardized Protocol (MCP)**: Decouples LLM agents from application-specific APIs via JSON-RPC 2.0 schemas.\n3. **Execution Sandbox**: Provides controlled authorization boundaries and state persistence for tools.\n4. **Context Window Management**: Efficiently compresses tool results, email threads, and document revisions into the LLM context.\n\n---\n\n## 3. The Role of Model Context Protocol (MCP)\nThe **Model Context Protocol (MCP)**, initiated by Anthropic and adopted industry-wide, standardizes how AI assistants interface with tools and data sources:\n- **Uniform Tool Discovery**: `tools/list` exposes tool signatures, argument types, and descriptions.\n- **Deterministic Tool Calling**: `tools/call` enforces structured input validation with JSON Schema / Zod.\n- **Transport Agnostic**: Works interchangeably across Stdio, Server-Sent Events (SSE), and In-Memory linked pipes.\n\n---\n\n## 4. Multi-Application Workflow Example\n```mermaid\nflowchart LR\n    A[User Prompt] --> B[Gemini Planner]\n    B -->|MCP Call 1| C[Gmail: List & Summarize]\n    C -->|Context| B\n    B -->|MCP Call 2| D[Docs: Create & Insert Notes]\n    D -->|Doc ID| B\n    B -->|MCP Call 3| E[Calendar: Schedule Sync]\n    E -->|Confirmation| F[Final Unified Response]\n```\n\n---\n\n## 5. Next Steps for Workshop Attendees\n- [x] Configure Gmail MCP server for inbox triage\n- [x] Integrate Google Docs MCP server for automated note generation\n- [ ] Connect Google Calendar MCP server to schedule prep syncs\n- [ ] Connect Tavily search for dynamic web intelligence\n\n*Generated automatically by MCP Personal AI Workspace*\n*Date: 10/14/2026 | Document ID: Generated via MCP*"
+    },
+    {
+      "documentId": "doc_1791994881295_861",
+      "title": "AI Workshop Notes",
+      "createdTime": "2026-10-14T16:21:21.295Z",
+      "modifiedTime": "2026-10-14T16:21:21.295Z",
+      "content": "# AI Workshop Notes\n\n## Executive Summary\nThis document provides a comprehensive overview of **Agentic AI**, architectural foundations, autonomous tool use, and the **Model Context Protocol (MCP)** for building personalized workspace assistants.\n\n---\n\n## 1. Fundamentals of Agentic AI\nUnlike traditional conversational chatbots that merely generate textual answers, **Agentic AI systems** are goal-driven autonomous entities endowed with:\n- **Perception & State Awareness**: Ingesting environment context, user intent, and real-time state.\n- **Reasoning & Planning**: Decomposing high-level user goals into structured multi-step execution plans.\n- **Autonomous Tool Execution**: Safely invoking external APIs (Gmail, Google Docs, Calendar, databases) to read, mutate, and create resources.\n- **Feedback & Self-Correction**: Evaluating execution outcomes and dynamically adjusting subsequent steps if errors occur.\n\n---\n\n## 2. Core Pillars of an Agentic Architecture\n1. **The LLM Core (Brain)**: Evaluates instructions, chooses functions, and synthesizes answers (e.g., Google Gemini 2.0).\n2. **Standardized Protocol (MCP)**: Decouples LLM agents from application-specific APIs via JSON-RPC 2.0 schemas.\n3. **Execution Sandbox**: Provides controlled authorization boundaries and state persistence for tools.\n4. **Context Window Management**: Efficiently compresses tool results, email threads, and document revisions into the LLM context.\n\n---\n\n## 3. The Role of Model Context Protocol (MCP)\nThe **Model Context Protocol (MCP)**, initiated by Anthropic and adopted industry-wide, standardizes how AI assistants interface with tools and data sources:\n- **Uniform Tool Discovery**: `tools/list` exposes tool signatures, argument types, and descriptions.\n- **Deterministic Tool Calling**: `tools/call` enforces structured input validation with JSON Schema / Zod.\n- **Transport Agnostic**: Works interchangeably across Stdio, Server-Sent Events (SSE), and In-Memory linked pipes.\n\n---\n\n## 4. Multi-Application Workflow Example\n```mermaid\nflowchart LR\n    A[User Prompt] --> B[Gemini Planner]\n    B -->|MCP Call 1| C[Gmail: List & Summarize]\n    C -->|Context| B\n    B -->|MCP Call 2| D[Docs: Create & Insert Notes]\n    D -->|Doc ID| B\n    B -->|MCP Call 3| E[Calendar: Schedule Sync]\n    E -->|Confirmation| F[Final Unified Response]\n```\n\n---\n\n## 5. Next Steps for Workshop Attendees\n- [x] Configure Gmail MCP server for inbox triage\n- [x] Integrate Google Docs MCP server for automated note generation\n- [ ] Connect Google Calendar MCP server to schedule prep syncs\n- [ ] Connect Tavily search for dynamic web intelligence\n\n*Generated automatically by MCP Personal AI Workspace*\n*Date: 10/14/2026 | Document ID: Generated via MCP*"
+    },
+    {
+      "documentId": "doc_1791994865920_657",
+      "title": "AI Workshop Notes",
+      "createdTime": "2026-10-14T16:21:05.920Z",
+      "modifiedTime": "2026-10-14T16:21:05.920Z",
+      "content": "# AI Workshop Notes\n\n## Executive Summary\nThis document provides a comprehensive overview of **Agentic AI**, architectural foundations, autonomous tool use, and the **Model Context Protocol (MCP)** for building personalized workspace assistants.\n\n---\n\n## 1. Fundamentals of Agentic AI\nUnlike traditional conversational chatbots that merely generate textual answers, **Agentic AI systems** are goal-driven autonomous entities endowed with:\n- **Perception & State Awareness**: Ingesting environment context, user intent, and real-time state.\n- **Reasoning & Planning**: Decomposing high-level user goals into structured multi-step execution plans.\n- **Autonomous Tool Execution**: Safely invoking external APIs (Gmail, Google Docs, Calendar, databases) to read, mutate, and create resources.\n- **Feedback & Self-Correction**: Evaluating execution outcomes and dynamically adjusting subsequent steps if errors occur.\n\n---\n\n## 2. Core Pillars of an Agentic Architecture\n1. **The LLM Core (Brain)**: Evaluates instructions, chooses functions, and synthesizes answers (e.g., Google Gemini 2.0).\n2. **Standardized Protocol (MCP)**: Decouples LLM agents from application-specific APIs via JSON-RPC 2.0 schemas.\n3. **Execution Sandbox**: Provides controlled authorization boundaries and state persistence for tools.\n4. **Context Window Management**: Efficiently compresses tool results, email threads, and document revisions into the LLM context.\n\n---\n\n## 3. The Role of Model Context Protocol (MCP)\nThe **Model Context Protocol (MCP)**, initiated by Anthropic and adopted industry-wide, standardizes how AI assistants interface with tools and data sources:\n- **Uniform Tool Discovery**: `tools/list` exposes tool signatures, argument types, and descriptions.\n- **Deterministic Tool Calling**: `tools/call` enforces structured input validation with JSON Schema / Zod.\n- **Transport Agnostic**: Works interchangeably across Stdio, Server-Sent Events (SSE), and In-Memory linked pipes.\n\n---\n\n## 4. Multi-Application Workflow Example\n```mermaid\nflowchart LR\n    A[User Prompt] --> B[Gemini Planner]\n    B -->|MCP Call 1| C[Gmail: List & Summarize]\n    C -->|Context| B\n    B -->|MCP Call 2| D[Docs: Create & Insert Notes]\n    D -->|Doc ID| B\n    B -->|MCP Call 3| E[Calendar: Schedule Sync]\n    E -->|Confirmation| F[Final Unified Response]\n```\n\n---\n\n## 5. Next Steps for Workshop Attendees\n- [x] Configure Gmail MCP server for inbox triage\n- [x] Integrate Google Docs MCP server for automated note generation\n- [ ] Connect Google Calendar MCP server to schedule prep syncs\n- [ ] Connect Tavily search for dynamic web intelligence\n\n*Generated automatically by MCP Personal AI Workspace*\n*Date: 10/14/2026 | Document ID: Generated via MCP*"
+    },
+    {
+      "documentId": "doc_1791993760299_277",
+      "title": "AI Workshop Notes & Hands-on Curriculum",
+      "createdTime": "2026-10-14T16:02:40.299Z",
+      "modifiedTime": "2026-10-14T16:02:40.299Z",
+      "content": "# AI Workshop Notes & Hands-on Curriculum\n\n## Workshop Context & Objectives\n- **Target Audience:** 80+ AI Engineers, Product Leads, and Solutions Architects\n- **Organizer:** Elena Rostova (Head of DevRel, AI Summit)\n- **Key Deliverable:** Comprehensive curriculum covering Agentic AI fundamentals, multi-application tool execution, and Model Context Protocol (MCP).\n\n---\n\n## 1. Fundamentals of Agentic AI\n- **Autonomous Goal Decomposition**: Breaking high-level user instructions into sequential tool invocations.\n- **Model Context Protocol (MCP)**: Standardized JSON-RPC 2.0 communication decoupling LLM clients from application APIs.\n- **Dynamic Tool Discovery**: Automatic capability discovery through MCP tool schemas.\n\n---\n\n## 2. Multi-Application Hands-on Workflow\n1. **Gmail Integration**: Read and triage incoming workshop attendee queries.\n2. **Google Docs Integration**: Programmatically generate agendas and technical notes.\n3. **Google Calendar Integration**: Automatically schedule review syncs and confirm attendee presence.\n\n---\n\n## Action Items & Next Steps\n- [x] Initial email triage completed via Gmail MCP Server\n- [x] Curriculum outline created via Google Docs MCP Server\n- [x] Prep sync scheduled on Google Calendar for tomorrow at 11:00 AM\n\n*Document created via MCP Multi-Application Workflow*"
+    },
+    {
+      "documentId": "doc_1791993727462_971",
+      "title": "AI Workshop Notes & Hands-on Curriculum",
+      "createdTime": "2026-10-14T16:02:07.463Z",
+      "modifiedTime": "2026-10-14T16:02:07.463Z",
+      "content": "# AI Workshop Notes & Hands-on Curriculum\n\n## Workshop Context & Objectives\n- **Target Audience:** 80+ AI Engineers, Product Leads, and Solutions Architects\n- **Organizer:** Elena Rostova (Head of DevRel, AI Summit)\n- **Key Deliverable:** Comprehensive curriculum covering Agentic AI fundamentals, multi-application tool execution, and Model Context Protocol (MCP).\n\n---\n\n## 1. Fundamentals of Agentic AI\n- **Autonomous Goal Decomposition**: Breaking high-level user instructions into sequential tool invocations.\n- **Model Context Protocol (MCP)**: Standardized JSON-RPC 2.0 communication decoupling LLM clients from application APIs.\n- **Dynamic Tool Discovery**: Automatic capability discovery through MCP tool schemas.\n\n---\n\n## 2. Multi-Application Hands-on Workflow\n1. **Gmail Integration**: Read and triage incoming workshop attendee queries.\n2. **Google Docs Integration**: Programmatically generate agendas and technical notes.\n3. **Google Calendar Integration**: Automatically schedule review syncs and confirm attendee presence.\n\n---\n\n## Action Items & Next Steps\n- [x] Initial email triage completed via Gmail MCP Server\n- [x] Curriculum outline created via Google Docs MCP Server\n- [x] Prep sync scheduled on Google Calendar for tomorrow at 11:00 AM\n\n*Document created via MCP Multi-Application Workflow*"
+    },
+    {
+      "documentId": "doc_1791992802218_411",
+      "title": "AI Workshop Notes",
+      "createdTime": "2026-10-14T15:46:42.218Z",
+      "modifiedTime": "2026-10-14T15:46:42.218Z",
+      "content": "# AI Workshop Notes\n\n## Executive Summary\nThis document provides a comprehensive overview of **Agentic AI**, architectural foundations, autonomous tool use, and the **Model Context Protocol (MCP)** for building personalized workspace assistants.\n\n---\n\n## 1. Fundamentals of Agentic AI\nUnlike traditional conversational chatbots that merely generate textual answers, **Agentic AI systems** are goal-driven autonomous entities endowed with:\n- **Perception & State Awareness**: Ingesting environment context, user intent, and real-time state.\n- **Reasoning & Planning**: Decomposing high-level user goals into structured multi-step execution plans.\n- **Autonomous Tool Execution**: Safely invoking external APIs (Gmail, Google Docs, Calendar, databases) to read, mutate, and create resources.\n- **Feedback & Self-Correction**: Evaluating execution outcomes and dynamically adjusting subsequent steps if errors occur.\n\n---\n\n## 2. Core Pillars of an Agentic Architecture\n1. **The LLM Core (Brain)**: Evaluates instructions, chooses functions, and synthesizes answers (e.g., Google Gemini 2.0).\n2. **Standardized Protocol (MCP)**: Decouples LLM agents from application-specific APIs via JSON-RPC 2.0 schemas.\n3. **Execution Sandbox**: Provides controlled authorization boundaries and state persistence for tools.\n4. **Context Window Management**: Efficiently compresses tool results, email threads, and document revisions into the LLM context.\n\n---\n\n## 3. The Role of Model Context Protocol (MCP)\nThe **Model Context Protocol (MCP)**, initiated by Anthropic and adopted industry-wide, standardizes how AI assistants interface with tools and data sources:\n- **Uniform Tool Discovery**: `tools/list` exposes tool signatures, argument types, and descriptions.\n- **Deterministic Tool Calling**: `tools/call` enforces structured input validation with JSON Schema / Zod.\n- **Transport Agnostic**: Works interchangeably across Stdio, Server-Sent Events (SSE), and In-Memory linked pipes.\n\n---\n\n## 4. Multi-Application Workflow Example\n```mermaid\nflowchart LR\n    A[User Prompt] --> B[Gemini Planner]\n    B -->|MCP Call 1| C[Gmail: List & Summarize]\n    C -->|Context| B\n    B -->|MCP Call 2| D[Docs: Create & Insert Notes]\n    D -->|Doc ID| B\n    B -->|MCP Call 3| E[Calendar: Schedule Sync]\n    E -->|Confirmation| F[Final Unified Response]\n```\n\n---\n\n## 5. Next Steps for Workshop Attendees\n- [x] Configure Gmail MCP server for inbox triage\n- [x] Integrate Google Docs MCP server for automated note generation\n- [ ] Connect Google Calendar MCP server to schedule prep syncs\n- [ ] Connect Tavily search for dynamic web intelligence\n\n*Generated automatically by MCP Personal AI Workspace*\n*Date: 10/14/2026 | Document ID: Generated via MCP*"
+    },
+    {
+      "documentId": "doc_1791992280802_435",
+      "title": "AI Workshop Notes & Hands-on Curriculum",
+      "createdTime": "2026-10-14T15:38:00.802Z",
+      "modifiedTime": "2026-10-14T15:38:00.802Z",
+      "content": "# AI Workshop Notes & Hands-on Curriculum\n\n## Workshop Context & Objectives\n- **Target Audience:** 80+ AI Engineers, Product Leads, and Solutions Architects\n- **Organizer:** Elena Rostova (Head of DevRel, AI Summit)\n- **Key Deliverable:** Comprehensive curriculum covering Agentic AI fundamentals, multi-application tool execution, and Model Context Protocol (MCP).\n\n---\n\n## 1. Fundamentals of Agentic AI\n- **Autonomous Goal Decomposition**: Breaking high-level user instructions into sequential tool invocations.\n- **Model Context Protocol (MCP)**: Standardized JSON-RPC 2.0 communication decoupling LLM clients from application APIs.\n- **Dynamic Tool Discovery**: Automatic capability discovery through MCP tool schemas.\n\n---\n\n## 2. Multi-Application Hands-on Workflow\n1. **Gmail Integration**: Read and triage incoming workshop attendee queries.\n2. **Google Docs Integration**: Programmatically generate agendas and technical notes.\n3. **Google Calendar Integration**: Automatically schedule review syncs and confirm attendee presence.\n\n---\n\n## Action Items & Next Steps\n- [x] Initial email triage completed via Gmail MCP Server\n- [x] Curriculum outline created via Google Docs MCP Server\n- [x] Prep sync scheduled on Google Calendar for tomorrow at 11:00 AM\n\n*Document created via MCP Multi-Application Workflow*"
+    },
+    {
+      "documentId": "doc_1791992225954_272",
+      "title": "AI Workshop Notes & Hands-on Curriculum",
+      "createdTime": "2026-10-14T15:37:05.954Z",
+      "modifiedTime": "2026-10-14T15:37:05.954Z",
+      "content": "# AI Workshop Notes & Hands-on Curriculum\n\n## Workshop Context & Objectives\n- **Target Audience:** 80+ AI Engineers, Product Leads, and Solutions Architects\n- **Organizer:** Elena Rostova (Head of DevRel, AI Summit)\n- **Key Deliverable:** Comprehensive curriculum covering Agentic AI fundamentals, multi-application tool execution, and Model Context Protocol (MCP).\n\n---\n\n## 1. Fundamentals of Agentic AI\n- **Autonomous Goal Decomposition**: Breaking high-level user instructions into sequential tool invocations.\n- **Model Context Protocol (MCP)**: Standardized JSON-RPC 2.0 communication decoupling LLM clients from application APIs.\n- **Dynamic Tool Discovery**: Automatic capability discovery through MCP tool schemas.\n\n---\n\n## 2. Multi-Application Hands-on Workflow\n1. **Gmail Integration**: Read and triage incoming workshop attendee queries.\n2. **Google Docs Integration**: Programmatically generate agendas and technical notes.\n3. **Google Calendar Integration**: Automatically schedule review syncs and confirm attendee presence.\n\n---\n\n## Action Items & Next Steps\n- [x] Initial email triage completed via Gmail MCP Server\n- [x] Curriculum outline created via Google Docs MCP Server\n- [x] Prep sync scheduled on Google Calendar for tomorrow at 11:00 AM\n\n*Document created via MCP Multi-Application Workflow*"
+    },
+    {
+      "documentId": "doc_1791990816500_688",
+      "title": "AI Workshop Notes",
+      "createdTime": "2026-10-14T15:13:36.500Z",
+      "modifiedTime": "2026-10-14T15:13:36.500Z",
+      "content": "# AI Workshop Notes\n\n## Executive Summary\nThis document provides a comprehensive overview of **Agentic AI**, architectural foundations, autonomous tool use, and the **Model Context Protocol (MCP)** for building personalized workspace assistants.\n\n---\n\n## 1. Fundamentals of Agentic AI\nUnlike traditional conversational chatbots that merely generate textual answers, **Agentic AI systems** are goal-driven autonomous entities endowed with:\n- **Perception & State Awareness**: Ingesting environment context, user intent, and real-time state.\n- **Reasoning & Planning**: Decomposing high-level user goals into structured multi-step execution plans.\n- **Autonomous Tool Execution**: Safely invoking external APIs (Gmail, Google Docs, Calendar, databases) to read, mutate, and create resources.\n- **Feedback & Self-Correction**: Evaluating execution outcomes and dynamically adjusting subsequent steps if errors occur.\n\n---\n\n## 2. Core Pillars of an Agentic Architecture\n1. **The LLM Core (Brain)**: Evaluates instructions, chooses functions, and synthesizes answers (e.g., Google Gemini 2.0).\n2. **Standardized Protocol (MCP)**: Decouples LLM agents from application-specific APIs via JSON-RPC 2.0 schemas.\n3. **Execution Sandbox**: Provides controlled authorization boundaries and state persistence for tools.\n4. **Context Window Management**: Efficiently compresses tool results, email threads, and document revisions into the LLM context.\n\n---\n\n## 3. The Role of Model Context Protocol (MCP)\nThe **Model Context Protocol (MCP)**, initiated by Anthropic and adopted industry-wide, standardizes how AI assistants interface with tools and data sources:\n- **Uniform Tool Discovery**: `tools/list` exposes tool signatures, argument types, and descriptions.\n- **Deterministic Tool Calling**: `tools/call` enforces structured input validation with JSON Schema / Zod.\n- **Transport Agnostic**: Works interchangeably across Stdio, Server-Sent Events (SSE), and In-Memory linked pipes.\n\n---\n\n## 4. Multi-Application Workflow Example\n```mermaid\nflowchart LR\n    A[User Prompt] --> B[Gemini Planner]\n    B -->|MCP Call 1| C[Gmail: List & Summarize]\n    C -->|Context| B\n    B -->|MCP Call 2| D[Docs: Create & Insert Notes]\n    D -->|Doc ID| B\n    B -->|MCP Call 3| E[Calendar: Schedule Sync]\n    E -->|Confirmation| F[Final Unified Response]\n```\n\n---\n\n## 5. Next Steps for Workshop Attendees\n- [x] Configure Gmail MCP server for inbox triage\n- [x] Integrate Google Docs MCP server for automated note generation\n- [ ] Connect Google Calendar MCP server to schedule prep syncs\n- [ ] Connect Tavily search for dynamic web intelligence\n\n*Generated automatically by MCP Personal AI Workspace*\n*Date: 10/14/2026 | Document ID: Generated via MCP*"
+    },
+    {
+      "documentId": "doc_1791990740625_521",
+      "title": "AI Workshop Notes",
+      "createdTime": "2026-10-14T15:12:20.625Z",
+      "modifiedTime": "2026-10-14T15:12:20.625Z",
+      "content": "# AI Workshop Notes\n\n## Executive Summary\nThis document provides a comprehensive overview of **Agentic AI**, architectural foundations, autonomous tool use, and the **Model Context Protocol (MCP)** for building personalized workspace assistants.\n\n---\n\n## 1. Fundamentals of Agentic AI\nUnlike traditional conversational chatbots that merely generate textual answers, **Agentic AI systems** are goal-driven autonomous entities endowed with:\n- **Perception & State Awareness**: Ingesting environment context, user intent, and real-time state.\n- **Reasoning & Planning**: Decomposing high-level user goals into structured multi-step execution plans.\n- **Autonomous Tool Execution**: Safely invoking external APIs (Gmail, Google Docs, Calendar, databases) to read, mutate, and create resources.\n- **Feedback & Self-Correction**: Evaluating execution outcomes and dynamically adjusting subsequent steps if errors occur.\n\n---\n\n## 2. Core Pillars of an Agentic Architecture\n1. **The LLM Core (Brain)**: Evaluates instructions, chooses functions, and synthesizes answers (e.g., Google Gemini 2.0).\n2. **Standardized Protocol (MCP)**: Decouples LLM agents from application-specific APIs via JSON-RPC 2.0 schemas.\n3. **Execution Sandbox**: Provides controlled authorization boundaries and state persistence for tools.\n4. **Context Window Management**: Efficiently compresses tool results, email threads, and document revisions into the LLM context.\n\n---\n\n## 3. The Role of Model Context Protocol (MCP)\nThe **Model Context Protocol (MCP)**, initiated by Anthropic and adopted industry-wide, standardizes how AI assistants interface with tools and data sources:\n- **Uniform Tool Discovery**: `tools/list` exposes tool signatures, argument types, and descriptions.\n- **Deterministic Tool Calling**: `tools/call` enforces structured input validation with JSON Schema / Zod.\n- **Transport Agnostic**: Works interchangeably across Stdio, Server-Sent Events (SSE), and In-Memory linked pipes.\n\n---\n\n## 4. Multi-Application Workflow Example\n```mermaid\nflowchart LR\n    A[User Prompt] --> B[Gemini Planner]\n    B -->|MCP Call 1| C[Gmail: List & Summarize]\n    C -->|Context| B\n    B -->|MCP Call 2| D[Docs: Create & Insert Notes]\n    D -->|Doc ID| B\n    B -->|MCP Call 3| E[Calendar: Schedule Sync]\n    E -->|Confirmation| F[Final Unified Response]\n```\n\n---\n\n## 5. Next Steps for Workshop Attendees\n- [x] Configure Gmail MCP server for inbox triage\n- [x] Integrate Google Docs MCP server for automated note generation\n- [ ] Connect Google Calendar MCP server to schedule prep syncs\n- [ ] Connect Tavily search for dynamic web intelligence\n\n*Generated automatically by MCP Personal AI Workspace*\n*Date: 10/14/2026 | Document ID: Generated via MCP*"
+    },
+    {
+      "documentId": "doc_workspace_guidelines_001",
+      "title": "Personal AI Workspace Architecture Guide",
+      "createdTime": "2026-10-11T15:06:16.026Z",
+      "modifiedTime": "2026-10-14T03:06:16.026Z",
+      "content": "# Personal AI Workspace Architecture Guide\n\n## Overview\nThis document outlines the core architecture of the MCP-Powered Personal AI Workspace. The workspace bridges cutting-edge LLMs (Google Gemini) with enterprise productivity applications (Gmail, Google Docs, Drive, Calendar) using the open Model Context Protocol (MCP).\n\n## Key Components\n1. **Model Context Protocol (MCP) Server**: Exposes standardized tools for querying and mutating external applications.\n2. **AI Agent Orchestrator**: Leverages Gemini's function calling to plan, invoke tools sequentially, and summarize outcomes.\n3. **Multi-Application Workflows**: Seamlessly moves data across Gmail, Docs, Drive, and Calendar in a single prompt.\n\n## Next Steps\n- Implement Gmail and Google Docs automation\n- Integrate Google Calendar and Drive\n- Connect Tavily web search for real-time external intelligence"
+    }
+  ],
+  "drafts": [],
+  "events": [
+    {
+      "id": "cal_evt_101",
+      "summary": "Weekly Engineering Architecture Standup",
+      "description": "Weekly engineering leads sync to review system architecture, security checklist, and releases.",
+      "start": "2026-10-15T07:00:00.000Z",
+      "end": "2026-10-15T07:30:00.000Z",
+      "location": "Google Meet (meet.google.com/xyz-arch-leads)",
+      "attendees": [
+        "alex.rivera@techcorp.io",
+        "me@workspace.ai"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "cal_evt_102",
+      "summary": "Q4 Cloud Budget & Credits Review",
+      "description": "Financial review with Sarah on cloud credits allocation for agentic AI workloads.",
+      "start": "2026-10-21T11:00:00.000Z",
+      "end": "2026-10-21T12:00:00.000Z",
+      "location": "Conference Room B / Google Meet",
+      "attendees": [
+        "sarah.chen@innovate.co",
+        "me@workspace.ai"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "cal_evt_1791992225956_643",
+      "summary": "AI Workshop Planning & Review Sync",
+      "description": "Prep sync with Elena Rostova regarding the upcoming AI Workshop.\nReviewing created Google Doc: AI Workshop Notes & Hands-on Curriculum (ID: doc_1791992225954_272)\nDocument Link: https://docs.google.com/document/d/doc_1791992225954_272/edit",
+      "start": "2026-10-15T08:00:00.000Z",
+      "end": "2026-10-15T09:00:00.000Z",
+      "location": "Google Meet (meet.google.com/ai-workshop-sync)",
+      "attendees": [
+        "elena.rostova@ai-summit.org",
+        "me@workspace.ai"
+      ],
+      "status": "confirmed",
+      "createdTime": "2026-10-14T15:37:05.956Z"
+    },
+    {
+      "id": "cal_evt_1791992280806_335",
+      "summary": "AI Workshop Planning & Review Sync",
+      "description": "Prep sync with Elena Rostova regarding the upcoming AI Workshop.\nReviewing created Google Doc: AI Workshop Notes & Hands-on Curriculum (ID: doc_1791992280802_435)\nDocument Link: https://docs.google.com/document/d/doc_1791992280802_435/edit",
+      "start": "2026-10-15T08:00:00.000Z",
+      "end": "2026-10-15T09:00:00.000Z",
+      "location": "Google Meet (meet.google.com/ai-workshop-sync)",
+      "attendees": [
+        "elena.rostova@ai-summit.org",
+        "me@workspace.ai"
+      ],
+      "status": "confirmed",
+      "createdTime": "2026-10-14T15:38:00.806Z"
+    },
+    {
+      "id": "cal_evt_1791993727464_64",
+      "summary": "AI Workshop Planning & Review Sync",
+      "description": "Prep sync with Elena Rostova regarding the upcoming AI Workshop.\nReviewing created Google Doc: AI Workshop Notes & Hands-on Curriculum (ID: doc_1791993727462_971)\nDocument Link: https://docs.google.com/document/d/doc_1791993727462_971/edit",
+      "start": "2026-10-15T08:00:00.000Z",
+      "end": "2026-10-15T09:00:00.000Z",
+      "location": "Google Meet (meet.google.com/ai-workshop-sync)",
+      "attendees": [
+        "elena.rostova@ai-summit.org",
+        "me@workspace.ai"
+      ],
+      "status": "confirmed",
+      "createdTime": "2026-10-14T16:02:07.464Z"
+    },
+    {
+      "id": "cal_evt_1791993760300_867",
+      "summary": "AI Workshop Planning & Review Sync",
+      "description": "Prep sync with Elena Rostova regarding the upcoming AI Workshop.\nReviewing created Google Doc: AI Workshop Notes & Hands-on Curriculum (ID: doc_1791993760299_277)\nDocument Link: https://docs.google.com/document/d/doc_1791993760299_277/edit",
+      "start": "2026-10-15T08:00:00.000Z",
+      "end": "2026-10-15T09:00:00.000Z",
+      "location": "Google Meet (meet.google.com/ai-workshop-sync)",
+      "attendees": [
+        "elena.rostova@ai-summit.org",
+        "me@workspace.ai"
+      ],
+      "status": "confirmed",
+      "createdTime": "2026-10-14T16:02:40.300Z"
+    }
+  ],
+  "driveFiles": [
+    {
+      "id": "folder_ai_summit",
+      "name": "AI Summit & Workshop Resources",
+      "mimeType": "application/vnd.google-apps.folder",
+      "modifiedTime": "2026-10-13T16:19:54.936Z",
+      "size": "-",
+      "shared": true,
+      "sharedWith": [
+        "elena.rostova@ai-summit.org"
+      ],
+      "webViewLink": "https://drive.google.com/drive/folders/folder_ai_summit"
+    },
+    {
+      "id": "folder_engineering",
+      "name": "Production Architecture & Specifications",
+      "mimeType": "application/vnd.google-apps.folder",
+      "modifiedTime": "2026-10-12T16:19:54.936Z",
+      "size": "-",
+      "shared": true,
+      "sharedWith": [
+        "alex.rivera@techcorp.io"
+      ],
+      "webViewLink": "https://drive.google.com/drive/folders/folder_engineering"
+    },
+    {
+      "id": "file_drive_101",
+      "name": "Agentic AI Workshop Syllabus.gslides",
+      "mimeType": "application/vnd.google-apps.presentation",
+      "parentFolderId": "folder_ai_summit",
+      "modifiedTime": "2026-10-14T04:19:54.936Z",
+      "size": "2.4 MB",
+      "shared": true,
+      "sharedWith": [
+        "elena.rostova@ai-summit.org"
+      ],
+      "webViewLink": "https://docs.google.com/presentation/d/file_drive_101/edit",
+      "lastSharedRole": "reader"
+    },
+    {
+      "id": "file_drive_102",
+      "name": "Q3 Release Security Audit.gdoc",
+      "mimeType": "application/vnd.google-apps.document",
+      "parentFolderId": "folder_engineering",
+      "modifiedTime": "2026-10-14T14:49:54.936Z",
+      "size": "145 KB",
+      "shared": true,
+      "sharedWith": [
+        "alex.rivera@techcorp.io"
+      ],
+      "webViewLink": "https://docs.google.com/document/d/file_drive_102/edit"
+    },
+    {
+      "id": "file_drive_103",
+      "name": "Q4 Infrastructure Budget.gsheet",
+      "mimeType": "application/vnd.google-apps.spreadsheet",
+      "modifiedTime": "2026-10-14T11:19:54.936Z",
+      "size": "520 KB",
+      "shared": true,
+      "sharedWith": [
+        "sarah.chen@innovate.co"
+      ],
+      "webViewLink": "https://docs.google.com/spreadsheets/d/file_drive_103/edit"
+    }
+  ]
+}

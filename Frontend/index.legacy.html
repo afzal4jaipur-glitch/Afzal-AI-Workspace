@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Personal AI Workspace | Gmail & Google Docs Agent</title>
+  <meta name="description" content="A unified Personal AI Workspace powered by Model Context Protocol (MCP) and Gemini to automate Gmail and Google Docs tasks.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Bar -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="app-logo">
+          <div class="logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div class="logo-text">
+            <h1>Personal AI Workspace</h1>
+            <span class="logo-badge">MCP Protocol v1.0</span>
+          </div>
+        </div>
+
+        <div class="status-pill-group">
+          <div class="status-pill" id="mcpStatusPill">
+            <span class="status-indicator active"></span>
+            <span class="status-label">MCP Server: <strong>Active</strong></span>
+          </div>
+          <div class="status-pill" id="geminiStatusPill">
+            <span class="status-indicator active"></span>
+            <span class="status-label">AI Engine: <strong id="engineModelName">Gemini 2.0</strong></span>
+          </div>
+          <div class="status-pill mode-pill" id="modePill" title="Click to configure credentials or switch modes">
+            <span class="mode-icon">⚡</span>
+            <span id="workspaceModeLabel">Sandbox & Live Mode</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="demo-actions">
+          <button class="demo-btn" id="btnDemo1" title="Execute Demo 1: Retrieve and summarize latest 5 emails">
+            <span class="demo-btn-tag">Demo 1</span>
+            <span class="demo-btn-text">📧 Gmail Assistant</span>
+          </button>
+          <button class="demo-btn" id="btnDemo2" title="Execute Demo 2: Generate Agentic AI notes in Google Docs">
+            <span class="demo-btn-tag">Demo 2</span>
+            <span class="demo-btn-text">📄 Google Docs Automation</span>
+          </button>
+          <button class="demo-btn" id="btnDemo3" title="Execute Demo 3: Multi-Application Workflow across Gmail, Docs, and Calendar">
+            <span class="demo-btn-tag" style="background: linear-gradient(135deg, #10b981, #06b6d4);">Demo 3</span>
+            <span class="demo-btn-text">🌟 Multi-App Workflow</span>
+          </button>
+        </div>
+
+        <button class="icon-btn" id="settingsBtn" title="Settings & API Keys">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Body -->
+    <main class="workspace-main">
+      <!-- Left Panel: Integrated Services Explorer -->
+      <section class="explorer-panel" id="explorerPanel">
+        <div class="explorer-tabs">
+          <button class="tab-btn active" data-tab="gmailTab" id="tabGmailBtn">
+            <span class="tab-icon">📧</span>
+            <span class="tab-title">Gmail</span>
+            <span class="tab-count" id="emailCountBadge">5</span>
+          </button>
+          <button class="tab-btn" data-tab="docsTab" id="tabDocsBtn">
+            <span class="tab-icon">📄</span>
+            <span class="tab-title">Google Docs</span>
+            <span class="tab-count" id="docsCountBadge">1</span>
+          </button>
+          <button class="tab-btn" data-tab="calendarTab" id="tabCalendarBtn">
+            <span class="tab-icon">📅</span>
+            <span class="tab-title">Calendar</span>
+            <span class="tab-count" id="calendarCountBadge">2</span>
+          </button>
+          <button class="tab-btn" data-tab="toolsTab" id="tabToolsBtn">
+            <span class="tab-icon">🛠️</span>
+            <span class="tab-title">MCP Tools</span>
+            <span class="tab-count" id="toolsCountBadge">14</span>
+          </button>
+          <button class="tab-btn" data-tab="logsTab" id="tabLogsBtn">
+            <span class="tab-icon">⚡</span>
+            <span class="tab-title">MCP Trace</span>
+          </button>
+        </div>
+
+        <div class="explorer-content">
+          <!-- Gmail Tab Content -->
+          <div class="tab-pane active" id="gmailTab">
+            <div class="pane-toolbar">
+              <div class="pane-title-group">
+                <h3>Gmail Inbox</h3>
+                <span class="pane-subtitle">Live connected via Gmail MCP Tools</span>
+              </div>
+              <div class="pane-actions">
+                <button class="small-btn" id="refreshEmailsBtn" title="Sync Inbox">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                  Sync
+                </button>
+                <button class="small-btn primary" id="composeDraftBtn" title="Compose New Draft">
+                  + Draft
+                </button>
+              </div>
+            </div>
+
+            <div class="email-list-container" id="emailListContainer">
+              <div class="loading-state">Loading emails from MCP server...</div>
+            </div>
+          </div>
+
+          <!-- Google Docs Tab Content -->
+          <div class="tab-pane" id="docsTab">
+            <div class="pane-toolbar">
+              <div class="pane-title-group">
+                <h3>Google Docs Repository</h3>
+                <span class="pane-subtitle">Created & updated through Google Docs MCP Tools</span>
+              </div>
+              <div class="pane-actions">
+                <button class="small-btn" id="refreshDocsBtn" title="Refresh Documents">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                  Sync
+                </button>
+              </div>
+            </div>
+
+            <div class="docs-split-view">
+              <div class="docs-list-container" id="docsListContainer">
+                <div class="loading-state">Loading documents from MCP server...</div>
+              </div>
+              <div class="doc-viewer-container" id="docViewerContainer">
+                <div class="doc-viewer-placeholder" id="docViewerPlaceholder">
+                  <div class="placeholder-icon">📄</div>
+                  <h4>No Document Selected</h4>
+                  <p>Select a document from the left list or ask the AI assistant to generate one automatically.</p>
+                </div>
+                <div class="doc-paper" id="docPaper" style="display: none;">
+                  <div class="doc-paper-header">
+                    <div>
+                      <h2 class="doc-title-display" id="docPaperTitle">Document Title</h2>
+                      <div class="doc-meta-display" id="docPaperMeta">ID: doc-123 • Updated recently</div>
+                    </div>
+                    <div class="doc-paper-actions">
+                      <button class="small-btn" id="copyDocContentBtn">Copy Text</button>
+                    </div>
+                  </div>
+                  <div class="doc-paper-content" id="docPaperContent">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Google Calendar Tab Content -->
+          <div class="tab-pane" id="calendarTab">
+            <div class="pane-toolbar">
+              <div class="pane-title-group">
+                <h3>Google Calendar Schedule</h3>
+                <span class="pane-subtitle">Managed via Calendar MCP Server</span>
+              </div>
+              <div class="pane-actions">
+                <button class="small-btn" id="refreshCalendarBtn" title="Sync Calendar">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                  Sync
+                </button>
+                <button class="small-btn primary" id="newEventBtn" title="Schedule New Meeting">
+                  + Schedule Event
+                </button>
+              </div>
+            </div>
+
+            <div class="calendar-list-container" id="calendarListContainer">
+              <div class="loading-state">Loading calendar events from MCP server...</div>
+            </div>
+          </div>
+
+          <!-- MCP Tools Tab Content -->
+          <div class="tab-pane" id="toolsTab">
+            <div class="pane-toolbar">
+              <div class="pane-title-group">
+                <h3>MCP Tool Definitions</h3>
+                <span class="pane-subtitle">Exposed to Gemini via 3 Modular MCP Servers (Gmail, Docs, Calendar)</span>
+              </div>
+              <span class="badge-count" id="toolCountLabel">14 Tools Available</span>
+            </div>
+            <div class="tools-grid" id="toolsGrid">
+              <div class="loading-state">Discovering registered MCP tools...</div>
+            </div>
+          </div>
+
+          <!-- MCP Live Trace Tab -->
+          <div class="tab-pane" id="logsTab">
+            <div class="pane-toolbar">
+              <div class="pane-title-group">
+                <h3>Model Context Protocol Trace</h3>
+                <span class="pane-subtitle">Real-time JSON-RPC 2.0 messages & agent reasoning loop</span>
+              </div>
+              <button class="small-btn" id="clearLogsBtn">Clear</button>
+            </div>
+            <div class="terminal-logs" id="terminalLogs">
+              <div class="log-entry system">
+                <span class="log-time">[Init]</span>
+                <span class="log-msg">MCP Server initialized. Transport: Stdio/In-Process. Awaiting requests.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: AI Workspace Assistant Chat -->
+      <section class="assistant-panel" id="assistantPanel">
+        <div class="assistant-header">
+          <div class="assistant-identity">
+            <div class="assistant-avatar">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+                <path d="M12 12L2.5 7.5"></path>
+                <path d="M12 12v10"></path>
+              </svg>
+            </div>
+            <div>
+              <h2>Autonomous Workspace Agent</h2>
+              <p class="assistant-subtext">Coordinates Gmail & Google Docs via Model Context Protocol</p>
+            </div>
+          </div>
+          <div class="chat-controls">
+            <button class="icon-btn-text" id="clearChatBtn" title="Clear conversation history">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Reset Chat</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Conversation Messages -->
+        <div class="messages-container" id="messagesContainer">
+          <!-- Initial Welcome Message -->
+          <div class="message assistant-message welcome-message">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              <h3>Welcome to your MCP Personal AI Workspace!</h3>
+              <p>I am your unified AI assistant powered by <strong>Gemini</strong> and the <strong>Model Context Protocol (MCP)</strong>. I can query your Gmail inbox, manage drafts, and create or edit Google Docs autonomously.</p>
+              
+              <div class="welcome-quickstarts">
+                <div class="quickstart-card" id="quickstartDemo1">
+                  <div class="qs-header">
+                    <span class="qs-badge">Demo 1</span>
+                    <strong>Gmail Assistant</strong>
+                  </div>
+                  <p>"Show me my latest five emails and summarize the important ones."</p>
+                  <button class="qs-run-btn">Run Demo 1 ➔</button>
+                </div>
+
+                <div class="quickstart-card" id="quickstartDemo2">
+                  <div class="qs-header">
+                    <span class="qs-badge">Demo 2</span>
+                    <strong>Google Docs Automation</strong>
+                  </div>
+                  <p>"Create a Google Doc titled 'AI Workshop Notes' and explain the fundamentals of Agentic AI."</p>
+                  <button class="qs-run-btn">Run Demo 2 ➔</button>
+                </div>
+
+                <div class="quickstart-card" id="quickstartDemo3" style="grid-column: span 2;">
+                  <div class="qs-header">
+                    <span class="qs-badge" style="background: linear-gradient(135deg, #10b981, #06b6d4);">Demo 3</span>
+                    <strong>Multi-Application Workflow (Gmail + Docs + Calendar)</strong>
+                  </div>
+                  <p>"Find emails related to my upcoming workshop, prepare a summary in Google Docs, and create a calendar event for the workshop."</p>
+                  <button class="qs-run-btn" style="color: #34d399;">Run Coordinated Multi-App Demo 3 ➔</button>
+                </div>
+              </div>
+
+              <div class="capability-tags">
+                <span class="cap-tag">📧 Read & Search Emails</span>
+                <span class="cap-tag">✍️ Prepare Drafts</span>
+                <span class="cap-tag">📄 Create Google Docs</span>
+                <span class="cap-tag">📝 Update Documents</span>
+                <span class="cap-tag">📅 Schedule Google Calendar</span>
+                <span class="cap-tag">🔄 Multi-App Coordination</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent Thinking Indicator (Hidden by default) -->
+        <div class="agent-thinking-bar" id="agentThinkingBar" style="display: none;">
+          <div class="thinking-spinner"></div>
+          <div class="thinking-text" id="thinkingText">Agent planning task & inspecting MCP tools...</div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="chat-input-wrapper">
+          <div class="suggested-chips">
+            <button class="chip-btn" data-prompt="Find emails related to my upcoming workshop, prepare a summary in Google Docs, and create a calendar event for the workshop.">
+              🌟 Demo 3: Workshop emails -> Docs summary -> Calendar event
+            </button>
+            <button class="chip-btn" data-prompt="Show me my latest five emails and summarize the important ones.">
+              Show latest 5 emails & summarize
+            </button>
+            <button class="chip-btn" data-prompt="Create a Google Doc titled 'AI Workshop Notes' and explain the fundamentals of Agentic AI.">
+              Create 'AI Workshop Notes' doc
+            </button>
+            <button class="chip-btn" data-prompt="Find any emails from Alex and draft a polite reply thanking him for the update.">
+              Find email from Alex & draft reply
+            </button>
+          </div>
+
+          <form class="chat-input-form" id="chatForm">
+            <textarea 
+              id="promptInput" 
+              placeholder="Ask anything across Gmail and Google Docs (e.g. 'Show me my latest 5 emails and summarize the important ones')..." 
+              rows="2"
+              required></textarea>
+            <button type="submit" id="sendBtn" class="send-btn" title="Send instruction (Enter)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </form>
+          <div class="input-hint">Press <strong>Enter</strong> to send, <strong>Shift + Enter</strong> for a new line</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Email Details Modal -->
+    <div class="modal-overlay" id="emailModal" style="display: none;">
+      <div class="modal-box email-modal-box">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge">Email Details</span>
+            <h3 id="modalEmailSubject">Email Subject</h3>
+          </div>
+          <button class="modal-close-btn" id="closeEmailModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="email-meta-grid">
+            <div class="meta-item">
+              <span class="meta-label">From:</span>
+              <span class="meta-val" id="modalEmailFrom">sender@example.com</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">To:</span>
+              <span class="meta-val" id="modalEmailTo">me@example.com</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Date:</span>
+              <span class="meta-val" id="modalEmailDate">Just now</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Labels:</span>
+              <span class="meta-val" id="modalEmailLabels">INBOX</span>
+            </div>
+          </div>
+          <div class="email-body-content" id="modalEmailBody">
+            Email body text...
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="small-btn" id="modalReplyPromptBtn">Draft Reply with AI</button>
+          <button class="small-btn primary" id="closeEmailModalBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compose Draft Modal -->
+    <div class="modal-overlay" id="composeModal" style="display: none;">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>Compose Draft via MCP</h3>
+          <button class="modal-close-btn" id="closeComposeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="composeForm">
+            <div class="form-group">
+              <label for="composeTo">Recipient (To):</label>
+              <input type="email" id="composeTo" placeholder="recipient@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="composeSubject">Subject:</label>
+              <input type="text" id="composeSubject" placeholder="Meeting update" required>
+            </div>
+            <div class="form-group">
+              <label for="composeBody">Body:</label>
+              <textarea id="composeBody" rows="5" placeholder="Hi there..." required></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="small-btn" id="cancelComposeBtn">Cancel</button>
+              <button type="submit" class="small-btn primary" id="saveDraftBtn">Save Draft via MCP</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Event Modal -->
+    <div class="modal-overlay" id="eventModal" style="display: none;">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge">Google Calendar MCP</span>
+            <h3>Schedule Calendar Meeting</h3>
+          </div>
+          <button class="modal-close-btn" id="closeEventModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="eventForm">
+            <div class="form-group">
+              <label for="eventSummary">Meeting Title / Summary:</label>
+              <input type="text" id="eventSummary" placeholder="AI Workshop Planning Sync" required>
+            </div>
+            <div class="form-group">
+              <label for="eventStart">Start Time (ISO or YYYY-MM-DDTHH:mm):</label>
+              <input type="datetime-local" id="eventStart" required>
+            </div>
+            <div class="form-group">
+              <label for="eventEnd">End Time:</label>
+              <input type="datetime-local" id="eventEnd" required>
+            </div>
+            <div class="form-group">
+              <label for="eventAttendees">Attendees (comma separated emails):</label>
+              <input type="text" id="eventAttendees" placeholder="elena.rostova@ai-summit.org, me@workspace.ai">
+            </div>
+            <div class="form-group">
+              <label for="eventLocation">Location / Meet Link:</label>
+              <input type="text" id="eventLocation" placeholder="Google Meet" value="Google Meet">
+            </div>
+            <div class="form-group">
+              <label for="eventDescription">Description & Agenda:</label>
+              <textarea id="eventDescription" rows="3" placeholder="Review workshop notes created in Google Docs..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="small-btn" id="cancelEventBtn">Cancel</button>
+              <button type="submit" class="small-btn primary" id="saveEventBtn">Schedule via MCP</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal" style="display: none;">
+      <div class="modal-box settings-modal-box">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge">Configuration</span>
+            <h3>Workspace & MCP Settings</h3>
+          </div>
+          <button class="modal-close-btn" id="closeSettingsModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-section">
+            <h4>1. Google Gemini AI Engine</h4>
+            <p class="settings-desc">Enter your Google Gemini API key to enable live LLM reasoning and autonomous MCP tool calling. If left blank, the workspace utilizes an intelligent built-in agent runner.</p>
+            <div class="form-group">
+              <label for="geminiApiKeyInput">Gemini API Key:</label>
+              <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy...">
+            </div>
+            <div class="form-group">
+              <label for="modelSelect">Gemini Model:</label>
+              <select id="modelSelect">
+                <option value="gemini-2.0-flash" selected>gemini-2.0-flash (Recommended: Ultra-fast tool use)</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4>2. Google Workspace (Gmail & Docs) Connection</h4>
+            <p class="settings-desc">Choose between the instant Sandbox mode (pre-populated with realistic emails and docs) or connect live Google Cloud credentials.</p>
+            <div class="form-group">
+              <label for="serviceModeSelect">Operational Mode:</label>
+              <select id="serviceModeSelect">
+                <option value="sandbox" selected>Sandbox Mode (Ready out-of-the-box, no OAuth needed)</option>
+                <option value="live">Live Google Workspace (Requires OAuth credentials in .env)</option>
+              </select>
+            </div>
+            <div class="oauth-status-info" id="oauthStatusInfo">
+              <div class="status-row">
+                <span>Google OAuth Configured:</span>
+                <span class="badge-sub" id="oauthConfiguredBadge">Not configured (Using Sandbox)</span>
+              </div>
+              <p class="small-info">To connect live Gmail & Google Docs, set <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, and <code>GOOGLE_REFRESH_TOKEN</code> in <code>Backend/.env</code>.</p>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4>3. Workspace Data Management</h4>
+            <p class="settings-desc">Reset the sandbox inbox and docs repository back to default state.</p>
+            <button class="small-btn danger" id="resetSandboxBtn">Reset Sandbox Data</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="small-btn" id="cancelSettingsBtn">Cancel</button>
+          <button class="small-btn primary" id="saveSettingsBtn">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

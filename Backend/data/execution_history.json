@@ -1,0 +1,278 @@
+[
+  {
+    "id": "exec_1792081922186_pj9egf",
+    "timestamp": "2026-10-15T16:32:02.186Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "What is the capital of Japan",
+    "toolsCalled": [],
+    "stepsCount": 0,
+    "durationMs": 5,
+    "resultSummary": "I received your instruction: \"What is the capital of Japan\".  I am connected to 19 tools across Gmail, Google Docs, Google Calendar, Google Drive, and Web Searc...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_1792081896052_q12gmh",
+    "timestamp": "2026-10-15T16:31:36.053Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "HI",
+    "toolsCalled": [],
+    "stepsCount": 0,
+    "durationMs": 8,
+    "resultSummary": "I received your instruction: \"HI\".  I am connected to 19 tools across Gmail, Google Docs, Google Calendar, Google Drive, and Web Search. Here are a few things y...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_1792078407229_sh8weg",
+    "timestamp": "2026-10-15T15:33:27.229Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Draft a reply to Marcus Brody <m.brody@ventures.com> about \"Coffee chat / Partnership discussion next week?\"",
+    "toolsCalled": [],
+    "stepsCount": 0,
+    "durationMs": 10,
+    "resultSummary": "I received your instruction: \"Draft a reply to Marcus Brody <m.brody@ventures.com> about \"Coffee chat / Partnership discussion next week?\"\".  I am connected to ...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_1791998077392_4cujwv",
+    "timestamp": "2026-10-14T17:14:37.392Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Generate an Agentic AI fundamentals document in Google Docs",
+    "toolsCalled": [
+      "docs_create_document"
+    ],
+    "stepsCount": 3,
+    "durationMs": 32,
+    "resultSummary": "I have created the document **\"AI Workshop Notes\"** in your Google Docs repository.  It covers the fundamentals of Agentic AI (perception, planning, tool execut...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_1791997793646_tnrn59",
+    "timestamp": "2026-10-14T17:09:53.646Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Show me my latest five emails and summarize the important ones.",
+    "toolsCalled": [
+      "gmail_list_messages"
+    ],
+    "stepsCount": 3,
+    "durationMs": 5,
+    "resultSummary": "Here is a summary of your recent emails:  ### Priority Items  **1. Upcoming AI Workshop & Hands-on Agenda** — *Elena Rostova <elena.rostova@ai-summit.org>* Hi! ...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_1791997399266_ny2xbi",
+    "timestamp": "2026-10-14T17:03:19.266Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Create a Google Doc titled 'AI Workshop Notes' and explain the fundamentals of Agentic AI.",
+    "toolsCalled": [
+      "docs_create_document"
+    ],
+    "stepsCount": 3,
+    "durationMs": 53,
+    "resultSummary": "### 📄 Google Doc Successfully Created via MCP Server!  I have generated the Agentic AI fundamentals curriculum and created the document titled **\"AI Workshop N...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_1791995436155_71c9bj",
+    "timestamp": "2026-10-14T16:30:36.155Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader.",
+    "toolsCalled": [
+      "drive_share_file"
+    ],
+    "stepsCount": 3,
+    "durationMs": 5,
+    "resultSummary": "Approved and executed drive_share_file",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "appr_1791995420597_mcnvit",
+    "timestamp": "2026-10-14T16:30:20.597Z",
+    "type": "approval_request",
+    "status": "APPROVED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader.",
+    "toolsCalled": [
+      "drive_share_file"
+    ],
+    "args": {
+      "fileId": "file_drive_101",
+      "email": "elena.rostova@ai-summit.org",
+      "role": "reader"
+    },
+    "durationMs": 0,
+    "resultSummary": "Approved by user at 7:30:36 PM; proceeding with execution.",
+    "requiresApproval": true,
+    "approvalId": "appr_1791995420597_mcnvit"
+  },
+  {
+    "id": "exec_1791995340251_unot3l",
+    "timestamp": "2026-10-14T16:29:00.251Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [
+      "drive_share_file"
+    ],
+    "stepsCount": 3,
+    "durationMs": 16,
+    "resultSummary": "Approved and executed drive_share_file",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "appr_1791995307749_kig7vn",
+    "timestamp": "2026-10-14T16:28:27.749Z",
+    "type": "approval_request",
+    "status": "APPROVED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [
+      "drive_share_file"
+    ],
+    "args": {
+      "fileId": "file_drive_101",
+      "email": "elena.rostova@ai-summit.org",
+      "role": "reader"
+    },
+    "durationMs": 0,
+    "resultSummary": "Approved by user at 7:29:00 PM; proceeding with execution.",
+    "requiresApproval": true,
+    "approvalId": "appr_1791995307749_kig7vn"
+  },
+  {
+    "id": "exec_1791995213436_zszt9",
+    "timestamp": "2026-10-14T16:26:53.436Z",
+    "type": "agent_workflow",
+    "status": "FAILED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [],
+    "stepsCount": 0,
+    "durationMs": 0,
+    "resultSummary": "Failed: bypassApproval is not defined",
+    "requiresApproval": false,
+    "error": "bypassApproval is not defined"
+  },
+  {
+    "id": "exec_1791995198458_0gwtbd",
+    "timestamp": "2026-10-14T16:26:38.458Z",
+    "type": "agent_workflow",
+    "status": "FAILED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [],
+    "stepsCount": 0,
+    "durationMs": 1,
+    "resultSummary": "Failed: bypassApproval is not defined",
+    "requiresApproval": false,
+    "error": "bypassApproval is not defined"
+  },
+  {
+    "id": "exec_1791994999961_dh3fhg",
+    "timestamp": "2026-10-14T16:23:19.961Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [
+      "docs_create_document"
+    ],
+    "stepsCount": 3,
+    "durationMs": 19,
+    "resultSummary": "### 📄 Google Doc Successfully Created via MCP Server!  I have generated the Agentic AI fundamentals curriculum and created the document titled **\"AI Workshop N...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_1791994881297_68qox9",
+    "timestamp": "2026-10-14T16:21:21.297Z",
+    "type": "agent_workflow",
+    "status": "FAILED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [],
+    "stepsCount": 0,
+    "durationMs": 2,
+    "resultSummary": "Failed: dbManager.isConnected is not a function",
+    "requiresApproval": false,
+    "error": "dbManager.isConnected is not a function"
+  },
+  {
+    "id": "exec_1791994881296_jo6iph",
+    "timestamp": "2026-10-14T16:21:21.296Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [
+      "docs_create_document"
+    ],
+    "stepsCount": 3,
+    "durationMs": 1,
+    "resultSummary": "### 📄 Google Doc Successfully Created via MCP Server!  I have generated the Agentic AI fundamentals curriculum and created the document titled **\"AI Workshop N...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_1791994865923_3iisof",
+    "timestamp": "2026-10-14T16:21:05.923Z",
+    "type": "agent_workflow",
+    "status": "FAILED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [],
+    "stepsCount": 0,
+    "durationMs": 18,
+    "resultSummary": "Failed: dbManager.isConnected is not a function",
+    "requiresApproval": false,
+    "error": "dbManager.isConnected is not a function"
+  },
+  {
+    "id": "exec_1791994865922_q2tqod",
+    "timestamp": "2026-10-14T16:21:05.922Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Share the AI Workshop document in Google Drive with elena.rostova@ai-summit.org as a reader",
+    "toolsCalled": [
+      "docs_create_document"
+    ],
+    "stepsCount": 3,
+    "durationMs": 17,
+    "resultSummary": "### 📄 Google Doc Successfully Created via MCP Server!  I have generated the Agentic AI fundamentals curriculum and created the document titled **\"AI Workshop N...",
+    "requiresApproval": false,
+    "error": null
+  },
+  {
+    "id": "exec_sample_1",
+    "timestamp": "2026-10-14T15:49:55.060Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Summarize 5 latest emails from my inbox",
+    "toolsCalled": [
+      "gmail_list_messages",
+      "gmail_read_message"
+    ],
+    "durationMs": 420,
+    "resultSummary": "Successfully summarized 5 emails from inbox.",
+    "requiresApproval": false
+  },
+  {
+    "id": "exec_sample_2",
+    "timestamp": "2026-10-14T16:04:55.060Z",
+    "type": "agent_workflow",
+    "status": "COMPLETED",
+    "prompt": "Research and create Agentic AI Workshop curriculum document in Google Docs",
+    "toolsCalled": [
+      "docs_create_document"
+    ],
+    "durationMs": 650,
+    "resultSummary": "Created document \"AI Workshop Notes & Hands-on Curriculum\" in Google Docs.",
+    "requiresApproval": false
+  }
+]
