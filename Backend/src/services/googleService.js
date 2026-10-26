@@ -40,8 +40,24 @@ class GoogleService {
 
     if (clientId && clientSecret && refreshToken) {
       try {
-        const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, 'http://localhost:3001/api/auth/google/callback');
+        const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback';
+        const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
         oauth2Client.setCredentials({ refresh_token: refreshToken });
+        
+        oauth2Client.on('tokens', (newTokens) => {
+          if (newTokens.refresh_token) {
+            try {
+              let existing = {};
+              if (fs.existsSync(SESSION_FILE)) {
+                existing = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf-8'));
+              }
+              existing.refreshToken = newTokens.refresh_token;
+              existing.updatedAt = new Date().toISOString();
+              fs.writeFileSync(SESSION_FILE, JSON.stringify(existing, null, 2));
+            } catch (e) {}
+          }
+        });
+
         this.authClient = oauth2Client;
         this.gmailClient = google.gmail({ version: 'v1', auth: oauth2Client });
         this.docsClient = google.docs({ version: 'v1', auth: oauth2Client });
@@ -56,6 +72,12 @@ class GoogleService {
     } else {
       this.authClient = null;
     }
+  }
+
+  hasOAuthConfig() {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    return Boolean(clientId && clientSecret && clientId.trim().length > 10);
   }
 
   isLiveConfigured() {
@@ -463,15 +485,16 @@ class GoogleService {
   }
 
   // --- OAuth 2.0 Flow Methods (Phase 1) ---
-  generateAuthUrl(clientId = null, clientSecret = null, redirectUri = 'http://localhost:3001/api/auth/google/callback', scopeLevel = 'initial', state = null) {
+  generateAuthUrl(clientId = null, clientSecret = null, redirectUri = null, scopeLevel = 'initial', state = null) {
     const cId = clientId || process.env.GOOGLE_CLIENT_ID;
     const cSec = clientSecret || process.env.GOOGLE_CLIENT_SECRET;
+    const rUri = redirectUri || process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback';
 
     if (!cId || !cSec) {
       throw new Error('Google Client ID and Client Secret are required to generate OAuth URL. Configure them in Backend/.env or paste in the UI modal.');
     }
 
-    const oauth2Client = new google.auth.OAuth2(cId, cSec, redirectUri);
+    const oauth2Client = new google.auth.OAuth2(cId, cSec, rUri);
     
     const SIGNIN_SCOPES = [
       'openid',
@@ -514,13 +537,28 @@ class GoogleService {
     });
   }
 
-  async handleOAuthCallback(code, clientId = null, clientSecret = null, redirectUri = 'http://localhost:3001/api/auth/google/callback') {
+  async handleOAuthCallback(code, clientId = null, clientSecret = null, redirectUri = null) {
     const cId = clientId || process.env.GOOGLE_CLIENT_ID;
     const cSec = clientSecret || process.env.GOOGLE_CLIENT_SECRET;
+    const rUri = redirectUri || process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback';
 
-    const oauth2Client = new google.auth.OAuth2(cId, cSec, redirectUri);
+    const oauth2Client = new google.auth.OAuth2(cId, cSec, rUri);
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
+
+    oauth2Client.on('tokens', (newTokens) => {
+      if (newTokens.refresh_token) {
+        try {
+          let existing = {};
+          if (fs.existsSync(SESSION_FILE)) {
+            existing = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf-8'));
+          }
+          existing.refreshToken = newTokens.refresh_token;
+          existing.updatedAt = new Date().toISOString();
+          fs.writeFileSync(SESSION_FILE, JSON.stringify(existing, null, 2));
+        } catch (e) {}
+      }
+    });
 
     this.authClient = oauth2Client;
     this.gmailClient = google.gmail({ version: 'v1', auth: oauth2Client });
@@ -557,15 +595,35 @@ class GoogleService {
     this.storedProfile = profile;
 
     // Persist session if refresh token available
+    const activeRefreshToken = tokens.refresh_token || process.env.GOOGLE_REFRESH_TOKEN || null;
     try {
       const sessionData = {
-        refreshToken: tokens.refresh_token || process.env.GOOGLE_REFRESH_TOKEN || null,
+        refreshToken: activeRefreshToken,
         profile,
         updatedAt: new Date().toISOString()
       };
       fs.writeFileSync(SESSION_FILE, JSON.stringify(sessionData, null, 2));
     } catch (e) {
       console.warn('[GoogleService] Could not persist session:', e.message);
+    }
+
+    if (tokens.refresh_token) {
+      process.env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token;
+      try {
+        const envPath = path.resolve(__dirname, '../../.env');
+        if (fs.existsSync(envPath)) {
+          let envContent = fs.readFileSync(envPath, 'utf-8');
+          const regex = new RegExp(`^GOOGLE_REFRESH_TOKEN=.*$`, 'm');
+          if (regex.test(envContent)) {
+            envContent = envContent.replace(regex, `GOOGLE_REFRESH_TOKEN=${tokens.refresh_token}`);
+          } else {
+            envContent += `\nGOOGLE_REFRESH_TOKEN=${tokens.refresh_token}`;
+          }
+          fs.writeFileSync(envPath, envContent.trim() + '\n', 'utf-8');
+        }
+      } catch (e) {
+        console.warn('[GoogleService] Failed saving refresh token to .env:', e.message);
+      }
     }
 
     return {
@@ -595,6 +653,16 @@ class GoogleService {
         fs.unlinkSync(SESSION_FILE);
       } catch (e) {}
     }
+
+    process.env.GOOGLE_REFRESH_TOKEN = '';
+    try {
+      const envPath = path.resolve(__dirname, '../../.env');
+      if (fs.existsSync(envPath)) {
+        let envContent = fs.readFileSync(envPath, 'utf-8');
+        envContent = envContent.replace(/^GOOGLE_REFRESH_TOKEN=.*$/m, 'GOOGLE_REFRESH_TOKEN=');
+        fs.writeFileSync(envPath, envContent.trim() + '\n', 'utf-8');
+      }
+    } catch (e) {}
 
     return {
       success: true,

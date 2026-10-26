@@ -6,6 +6,10 @@ import {
   Search, ShieldAlert, Key, CheckCircle2, AlertCircle, Bot, User, ArrowUpRight, LogOut
 } from 'lucide-react';
 import MarkdownRenderer from './components/MarkdownRenderer';
+import { 
+  FALLBACK_STATUS, FALLBACK_TOOLS, FALLBACK_EMAILS, 
+  FALLBACK_DOCS, FALLBACK_EVENTS, FALLBACK_DRIVE_FILES 
+} from './data/fallbackData';
 
 export default function App() {
   // Navigation & Layout
@@ -170,75 +174,111 @@ export default function App() {
   const fetchStatus = async () => {
     try {
       const res = await fetch('/api/status');
-      const data = await res.json();
-      setStatus(data);
-      if (data.accountProfile) setAccountProfile(data.accountProfile);
-      if (data.approvals) setApprovalsEnabled(data.approvals.approvalsRequired);
-      if (data.gmailMcpOption?.active) setGmailOption(data.gmailMcpOption.active);
-      if (data.aiEngine?.model) setGeminiModelInput(data.aiEngine.model);
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setStatus(data);
+        if (data.accountProfile) setAccountProfile(data.accountProfile);
+        if (data.approvals) setApprovalsEnabled(data.approvals.approvalsRequired);
+        if (data.gmailMcpOption?.active) setGmailOption(data.gmailMcpOption.active);
+        if (data.aiEngine?.model) setGeminiModelInput(data.aiEngine.model);
+
+        try {
+          const credsRes = await fetch('/api/auth/google/credentials');
+          if (credsRes.ok && credsRes.headers.get('content-type')?.includes('application/json')) {
+            const credsData = await credsRes.json();
+            if (credsData.clientId) {
+              setOauthCreds(prev => ({
+                ...prev,
+                clientId: prev.clientId || credsData.clientId
+              }));
+            }
+          }
+        } catch (err) {}
+        return;
+      }
     } catch (e) {
-      console.error('Error fetching status:', e);
+      console.warn('[Workspace] Live backend unreachable, activating resilient sandbox mode:', e.message);
     }
+
+    // Fallback mode (Netlify / Static Demo)
+    setStatus(FALLBACK_STATUS);
+    setAccountProfile(FALLBACK_STATUS.accountProfile);
+    setOauthCreds(prev => ({
+      ...prev,
+      clientId: prev.clientId || FALLBACK_STATUS.googleWorkspace.clientId
+    }));
   };
 
   const fetchTools = async () => {
     try {
       const res = await fetch('/api/tools');
-      const data = await res.json();
-      setTools(data.tools || []);
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setTools(data.tools || []);
+        return;
+      }
+    } catch (e) {}
+    setTools(FALLBACK_TOOLS);
   };
 
   const fetchEmails = async () => {
     try {
       const res = await fetch('/api/gmail/messages?maxResults=20');
-      const data = await res.json();
-      setEmails(data.messages || []);
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setEmails(data.messages || []);
+        return;
+      }
+    } catch (e) {}
+    setEmails(FALLBACK_EMAILS);
   };
 
   const fetchDocs = async () => {
     try {
       const res = await fetch('/api/docs?pageSize=20');
-      const data = await res.json();
-      setDocs(data.documents || []);
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setDocs(data.documents || []);
+        return;
+      }
+    } catch (e) {}
+    setDocs(FALLBACK_DOCS);
   };
 
   const fetchCalendar = async () => {
     try {
       const res = await fetch('/api/calendar/events?maxResults=20');
-      const data = await res.json();
-      setEvents(data.events || []);
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setEvents(data.events || []);
+        return;
+      }
+    } catch (e) {}
+    setEvents(FALLBACK_EVENTS);
   };
 
   const fetchDriveFiles = async () => {
     try {
       const res = await fetch('/api/drive/files');
-      const data = await res.json();
-      setDriveFiles(data.files || []);
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setDriveFiles(data.files || []);
+        return;
+      }
+    } catch (e) {}
+    setDriveFiles(FALLBACK_DRIVE_FILES);
   };
 
   const fetchHistory = async () => {
     try {
       const res = await fetch('/api/history');
-      const data = await res.json();
-      setHistoryList(data.history || []);
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setHistoryList(data.history || []);
+        return;
+      }
+    } catch (e) {}
+    setHistoryList([]);
   };
 
   const fetchApprovals = async () => {
@@ -488,11 +528,11 @@ export default function App() {
         window.location.href = data.url;
       } else {
         setShowAuthModal(true);
-        showToast('Google OAuth credentials required. Follow the steps in the setup guide.', 'info');
+        showToast(data.error || 'Google OAuth credentials required. Follow the steps in the setup guide.', 'error');
       }
     } catch (err) {
       setShowAuthModal(true);
-      showToast('Google OAuth setup required: ' + err.message, 'info');
+      showToast('Google OAuth setup required: ' + err.message, 'error');
     } finally {
       setIsSigningIn(false);
     }
@@ -552,10 +592,15 @@ export default function App() {
       if (data.success) {
         showToast('OAuth credentials saved', 'success');
         setShowAuthModal(false);
-        fetchStatus();
+        await fetchStatus();
+        return true;
+      } else {
+        showToast(data.error || 'Failed saving credentials', 'error');
+        return false;
       }
     } catch (e) {
       showToast('Error: ' + e.message, 'error');
+      return false;
     }
   };
 
@@ -1973,7 +2018,7 @@ export default function App() {
                 />
                 <input
                   type="password"
-                  placeholder="Google Client Secret"
+                  placeholder={status?.googleWorkspace?.hasOAuthConfig ? "Google Client Secret (Configured in .env)" : "Google Client Secret"}
                   value={oauthCreds.clientSecret}
                   onChange={(e) => setOauthCreds({ ...oauthCreds, clientSecret: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs"
@@ -1983,10 +2028,10 @@ export default function App() {
                   <button
                     type="button"
                     onClick={async () => {
-                      await handleSaveOAuthCreds();
-                      if (oauthCreds.clientId && oauthCreds.clientSecret) {
-                        handleGoogleSignIn();
+                      if (oauthCreds.clientId || oauthCreds.clientSecret) {
+                        await handleSaveOAuthCreds();
                       }
+                      await handleGoogleSignIn();
                     }}
                     className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs transition shadow-sm flex items-center justify-center gap-2"
                   >

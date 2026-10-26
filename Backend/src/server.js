@@ -79,6 +79,9 @@ app.get('/api/status', async (req, res) => {
       googleWorkspace: {
         mode,
         isLiveConfigured,
+        hasOAuthConfig: googleService.hasOAuthConfig(),
+        clientId: process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.slice(0, 20)}...` : null,
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback',
         supportedServices: ['Gmail', 'Google Docs', 'Google Calendar', 'Google Drive', 'Tavily Search']
       }
     });
@@ -250,8 +253,9 @@ app.get('/api/auth/google/url', (req, res) => {
   try {
     const { clientId, clientSecret, scopeLevel, returnTo } = req.query;
     const origin = returnTo || req.headers.referer || 'http://localhost:3001';
-    const state = Buffer.from(JSON.stringify({ returnTo: origin })).toString('base64');
-    const url = googleService.generateAuthUrl(clientId, clientSecret, undefined, scopeLevel || 'initial', state);
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback';
+    const state = Buffer.from(JSON.stringify({ returnTo: origin, redirectUri })).toString('base64');
+    const url = googleService.generateAuthUrl(clientId, clientSecret, redirectUri, scopeLevel || 'initial', state);
     res.json({ url, scopeLevel: scopeLevel || 'initial' });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -276,7 +280,8 @@ app.post('/api/mcp/gmail-option', async (req, res) => {
 app.get('/api/auth/google/callback', async (req, res) => {
   let returnBase = '/';
   try {
-    const { code, state } = req.query;
+    const { code, state, error, error_description } = req.query;
+    let redirectUri = null;
     if (state) {
       try {
         const parsed = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
@@ -284,14 +289,21 @@ app.get('/api/auth/google/callback', async (req, res) => {
           const u = new URL(parsed.returnTo);
           returnBase = `${u.origin}/`;
         }
+        if (parsed.redirectUri) {
+          redirectUri = parsed.redirectUri;
+        }
       } catch (e) {}
+    }
+
+    if (error) {
+      return res.redirect(`${returnBase}?auth=error&message=${encodeURIComponent(error_description || error)}`);
     }
 
     if (!code) {
       return res.redirect(`${returnBase}?auth=error&message=No+code+provided`);
     }
 
-    const authResult = await googleService.handleOAuthCallback(code);
+    const authResult = await googleService.handleOAuthCallback(code, null, null, redirectUri);
     const email = authResult.profile?.email || '';
     const name = authResult.profile?.name || '';
     res.redirect(`${returnBase}?auth=success&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`);
@@ -325,6 +337,17 @@ app.post('/api/auth/google/demo-login', (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+app.get('/api/auth/google/credentials', (req, res) => {
+  res.json({
+    hasClientId: Boolean(process.env.GOOGLE_CLIENT_ID),
+    hasClientSecret: Boolean(process.env.GOOGLE_CLIENT_SECRET),
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback',
+    isLiveConfigured: googleService.isLiveConfigured(),
+    mode: googleService.getMode()
+  });
 });
 
 app.post('/api/auth/google/credentials', (req, res) => {
