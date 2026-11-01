@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { dbManager } from '../db/mongoClient.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -319,6 +320,17 @@ class SandboxStore {
     this.driveFiles = JSON.parse(JSON.stringify(INITIAL_DRIVE_FILES));
     this.drafts = [];
     this.save();
+
+    if (dbManager.isConnected && dbManager.db) {
+      Promise.all([
+        dbManager.db.collection('emails').deleteMany({}).then(() => dbManager.db.collection('emails').insertMany(this.emails.map(e => ({ ...e })))),
+        dbManager.db.collection('documents').deleteMany({}).then(() => dbManager.db.collection('documents').insertMany(this.docs.map(d => ({ ...d })))),
+        dbManager.db.collection('events').deleteMany({}).then(() => dbManager.db.collection('events').insertMany(this.events.map(ev => ({ ...ev })))),
+        dbManager.db.collection('drive_files').deleteMany({}).then(() => dbManager.db.collection('drive_files').insertMany(this.driveFiles.map(f => ({ ...f })))),
+        dbManager.db.collection('drafts').deleteMany({})
+      ]).catch(err => console.warn('[MongoDB] Reset sync warning:', err.message));
+    }
+
     return { success: true, message: 'Sandbox data reset to factory initial state' };
   }
 
@@ -371,6 +383,9 @@ class SandboxStore {
     }
     msg.isRead = true;
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('emails').updateOne({ id }, { $set: { isRead: true } }).catch(() => {});
+    }
     return msg;
   }
 
@@ -393,8 +408,12 @@ class SandboxStore {
     };
     this.drafts.unshift(newDraft);
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('drafts').insertOne({ ...newDraft }).catch(() => {});
+    }
     return {
       id: draftId,
+      success: true,
       status: 'DRAFT_CREATED',
       to,
       subject,
@@ -420,8 +439,12 @@ class SandboxStore {
     };
     this.emails.unshift(sentMsg);
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('emails').insertOne({ ...sentMsg }).catch(() => {});
+    }
     return {
       id: msgId,
+      success: true,
       status: 'SENT',
       to,
       subject,
@@ -441,6 +464,9 @@ class SandboxStore {
     };
     this.docs.unshift(newDoc);
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('documents').insertOne({ ...newDoc }).catch(() => {});
+    }
     return {
       documentId: docId,
       title: newDoc.title,
@@ -478,6 +504,12 @@ class SandboxStore {
     }
     doc.modifiedTime = new Date().toISOString();
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('documents').updateOne(
+        { documentId },
+        { $set: { content: doc.content, modifiedTime: doc.modifiedTime } }
+      ).catch(() => {});
+    }
     return {
       documentId: doc.documentId,
       title: doc.title,
@@ -497,6 +529,12 @@ class SandboxStore {
     if (content !== undefined) doc.content = content;
     doc.modifiedTime = new Date().toISOString();
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('documents').updateOne(
+        { documentId },
+        { $set: { title: doc.title, content: doc.content, modifiedTime: doc.modifiedTime } }
+      ).catch(() => {});
+    }
     return {
       documentId: doc.documentId,
       title: doc.title,
@@ -578,9 +616,13 @@ class SandboxStore {
 
     this.events.push(newEvent);
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('events').insertOne({ ...newEvent }).catch(() => {});
+    }
 
     return {
       id: eventId,
+      success: true,
       status: 'EVENT_CREATED',
       summary: newEvent.summary,
       start: newEvent.start,
@@ -635,6 +677,9 @@ class SandboxStore {
     };
     this.driveFiles.unshift(newFolder);
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('drive_files').insertOne({ ...newFolder }).catch(() => {});
+    }
     return newFolder;
   }
 
@@ -647,6 +692,12 @@ class SandboxStore {
     file.shared = true;
     file.lastSharedRole = role;
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('drive_files').updateOne(
+        { id: file.id },
+        { $set: { shared: true, sharedWith: file.sharedWith, lastSharedRole: role } }
+      ).catch(() => {});
+    }
     return {
       id: file.id,
       name: file.name,
@@ -666,6 +717,9 @@ class SandboxStore {
     };
     this.traceLogs.unshift(log);
     if (this.traceLogs.length > 100) this.traceLogs.pop();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('trace_logs').insertOne({ ...log }).catch(() => {});
+    }
     return log;
   }
 

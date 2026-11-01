@@ -129,6 +129,11 @@ class HistoryService {
     this.history.unshift(historyEntry);
     this.save();
 
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('approvals').insertOne({ ...approvalRecord }).catch(() => {});
+      dbManager.db.collection('executions').insertOne({ ...historyEntry }).catch(() => {});
+    }
+
     return approvalRecord;
   }
 
@@ -160,7 +165,20 @@ class HistoryService {
       this.save();
     }
 
-    if (record.status === 'REJECTED') {
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('approvals').updateOne(
+        { id },
+        { $set: { status: record.status, decidedAt: record.decidedAt, decidedBy: record.decidedBy } }
+      ).catch(() => {});
+      if (historyItem) {
+        dbManager.db.collection('executions').updateOne(
+          { id: historyItem.id },
+          { $set: { status: historyItem.status, resultSummary: historyItem.resultSummary } }
+        ).catch(() => {});
+      }
+    }
+
+    if (record.status === 'REJECTED' || record.status === 'APPROVED') {
       this.pendingApprovals.delete(id);
     }
 
@@ -190,11 +208,9 @@ class HistoryService {
     }
     this.save();
 
-    // Optionally save to MongoDB collection if online
+    // Save to MongoDB collection if online
     if (dbManager.isConnected && dbManager.db) {
-      try {
-        dbManager.db.collection('executions').insertOne(entry).catch(() => {});
-      } catch (e) {}
+      dbManager.db.collection('executions').insertOne({ ...entry }).catch(() => {});
     }
 
     return entry;
@@ -211,6 +227,9 @@ class HistoryService {
   clearHistory() {
     this.history = [];
     this.save();
+    if (dbManager.isConnected && dbManager.db) {
+      dbManager.db.collection('executions').deleteMany({}).catch(() => {});
+    }
     return { success: true };
   }
 }

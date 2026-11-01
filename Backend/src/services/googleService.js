@@ -675,7 +675,7 @@ class GoogleService {
     this.storedProfile = {
       authorized: true,
       mode: 'sandbox_auth',
-      email: options.email || 'afzal@workspace.ai',
+      email: options.email || 'afzal4jaipur@gmail.com',
       name: options.name || 'Afzal',
       picture: options.picture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
       scopes: ['Gmail', 'Docs', 'Calendar', 'Drive', 'Tavily']

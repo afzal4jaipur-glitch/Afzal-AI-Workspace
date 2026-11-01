@@ -17,6 +17,7 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const DIST_DIR = path.resolve(__dirname, '../../Frontend/dist');
 const FRONTEND_DIR = fs.existsSync(DIST_DIR) ? DIST_DIR : path.resolve(__dirname, '../../Frontend');
 
@@ -194,10 +195,10 @@ app.get('/api/calendar/events', async (req, res) => {
   }
 });
 
-app.post('/api/calendar/events', async (req, res) => {
+app.post(['/api/calendar/events', '/api/calendar/event'], async (req, res) => {
   try {
     const result = await callTool('calendar_create_event', req.body);
-    res.json(result);
+    res.json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -212,6 +213,22 @@ app.get('/api/calendar/events/:id', async (req, res) => {
   }
 });
 
+// 6b. Web Search (Tavily MCP)
+app.post('/api/search', async (req, res) => {
+  try {
+    const { query, maxResults } = req.body;
+    const result = await callTool('tavily_search', { query, maxResults: maxResults || 5 });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 6c. Database Status API
+app.get('/api/db/status', (req, res) => {
+  res.json(dbManager.getStatus());
+});
+
 // 7. Trace Logs
 app.get('/api/logs', (req, res) => {
   res.json({ logs: sandboxStore.getTraceLogs(50) });
@@ -223,10 +240,11 @@ app.post('/api/logs/clear', (req, res) => {
 });
 
 // 7. Settings Update
-app.post('/api/settings', (req, res) => {
-  const { geminiApiKey, model, mode } = req.body;
-  if (geminiApiKey !== undefined) {
-    setApiKey(geminiApiKey);
+app.post(['/api/settings', '/api/settings/gemini'], (req, res) => {
+  const { geminiApiKey, apiKey, model, mode } = req.body;
+  const keyToSet = geminiApiKey !== undefined ? geminiApiKey : apiKey;
+  if (keyToSet !== undefined) {
+    setApiKey(keyToSet);
   }
   if (model) {
     setModel(model);
@@ -255,8 +273,8 @@ app.get('/api/auth/google/url', (req, res) => {
     const origin = returnTo || req.headers.referer || 'http://localhost:3001';
     const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback';
     const state = Buffer.from(JSON.stringify({ returnTo: origin, redirectUri })).toString('base64');
-    const url = googleService.generateAuthUrl(clientId, clientSecret, redirectUri, scopeLevel || 'initial', state);
-    res.json({ url, scopeLevel: scopeLevel || 'initial' });
+    const url = googleService.generateAuthUrl(clientId, clientSecret, redirectUri, scopeLevel || 'signin', state);
+    res.json({ url, scopeLevel: scopeLevel || 'signin' });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -306,7 +324,8 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const authResult = await googleService.handleOAuthCallback(code, null, null, redirectUri);
     const email = authResult.profile?.email || '';
     const name = authResult.profile?.name || '';
-    res.redirect(`${returnBase}?auth=success&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`);
+    const picture = authResult.profile?.picture || '';
+    res.redirect(`${returnBase}?auth=success&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&picture=${encodeURIComponent(picture)}`);
   } catch (err) {
     res.redirect(`${returnBase}?auth=error&message=${encodeURIComponent(err.message)}`);
   }
@@ -535,6 +554,7 @@ async function startServer() {
 
     console.log('[Startup] Connecting Database layer (MongoDB)...');
     await dbManager.connect();
+    await dbManager.syncAndSeed({ sandboxStore, historyService });
 
     app.listen(PORT, () => {
       console.log(`====================================================`);

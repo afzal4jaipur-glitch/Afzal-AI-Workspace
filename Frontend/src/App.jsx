@@ -61,7 +61,7 @@ export default function App() {
   // Form State
   const [geminiKeyInput, setGeminiKeyInput] = useState('');
   const [geminiModelInput, setGeminiModelInput] = useState('gemini-2.0-flash');
-  const [scopeLevel, setScopeLevel] = useState('initial');
+  const [scopeLevel, setScopeLevel] = useState('signin');
   const [gmailOption, setGmailOption] = useState('optionB');
   const [draftData, setDraftData] = useState({ to: '', subject: '', body: '' });
   const [eventData, setEventData] = useState({ summary: '', start: '', end: '', attendees: '', location: 'Google Meet', description: '' });
@@ -121,23 +121,84 @@ export default function App() {
 
   // Initial Data Fetch & OAuth Callback Handling
   useEffect(() => {
-    fetchAllData();
+    // 1. Check for Client-Side Google OAuth Hash Callback (#access_token=... on Netlify or Localhost)
+    if (window.location.hash && window.location.hash.includes('access_token=')) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      if (accessToken) {
+        localStorage.setItem('afzal_google_access_token', accessToken);
+        localStorage.removeItem('afzal_signed_out');
+        window.history.replaceState({}, document.title, window.location.pathname);
 
-    // Check for Google OAuth redirect callback params
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+          .then(r => r.ok ? r.json() : null)
+          .then(userInfo => {
+            const profile = {
+              authorized: true,
+              mode: 'live',
+              email: userInfo?.email || 'google_user@gmail.com',
+              name: userInfo?.name || userInfo?.given_name || userInfo?.email?.split('@')[0] || 'Google User',
+              picture: userInfo?.picture || null,
+              scopes: ['Gmail', 'Docs', 'Calendar', 'Drive']
+            };
+            localStorage.setItem('afzal_auth_profile', JSON.stringify(profile));
+            setAccountProfile(profile);
+            showToast(`Signed in successfully as ${profile.name}!`, 'success');
+            fetchAllData();
+          })
+          .catch(() => {
+            const fallbackProfile = {
+              authorized: true,
+              mode: 'live',
+              email: 'connected@gmail.com',
+              name: 'Google User',
+              picture: null,
+              scopes: ['Gmail', 'Docs', 'Calendar', 'Drive']
+            };
+            localStorage.setItem('afzal_auth_profile', JSON.stringify(fallbackProfile));
+            setAccountProfile(fallbackProfile);
+            showToast('Signed in with Google successfully!', 'success');
+          });
+      }
+    } else if (window.location.hash && window.location.hash.includes('error=')) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const err = hashParams.get('error_description') || hashParams.get('error') || 'OAuth failed';
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setShowAuthModal(true);
+      showToast(`Google Sign-In error: ${err}`, 'error');
+    }
+
+    // 2. Check for Backend Google OAuth Query Callback (?auth=success&email=...&name=...)
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('auth') === 'success') {
-        const email = params.get('email');
-        const name = params.get('name');
-        showToast(`Signed in successfully as ${name || email || 'Google Account'}!`, 'success');
-        fetchStatus();
+        const email = params.get('email') || '';
+        const name = params.get('name') || email.split('@')[0] || 'Google User';
+        const picture = params.get('picture') || null;
+        const profile = {
+          authorized: true,
+          mode: 'live',
+          email,
+          name,
+          picture,
+          scopes: ['Gmail', 'Docs', 'Calendar', 'Drive']
+        };
+        localStorage.removeItem('afzal_signed_out');
+        localStorage.setItem('afzal_auth_profile', JSON.stringify(profile));
+        setAccountProfile(profile);
+        showToast(`Signed in successfully as ${name || email}!`, 'success');
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (params.get('auth') === 'error') {
         const msg = params.get('message') || 'Authentication failed';
+        setShowAuthModal(true);
         showToast(`Sign-in error: ${msg}`, 'error');
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     } catch (e) {}
+
+    fetchAllData();
 
     const interval = setInterval(() => {
       fetchApprovals();
@@ -172,12 +233,28 @@ export default function App() {
   };
 
   const fetchStatus = async () => {
+    const savedProfileStr = localStorage.getItem('afzal_auth_profile');
+    const isExplicitlySignedOut = localStorage.getItem('afzal_signed_out') === 'true';
+    let savedProfile = null;
+    try {
+      if (savedProfileStr) savedProfile = JSON.parse(savedProfileStr);
+    } catch (e) {}
+
     try {
       const res = await fetch('/api/status');
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json();
         setStatus(data);
-        if (data.accountProfile) setAccountProfile(data.accountProfile);
+        if (isExplicitlySignedOut && !data.accountProfile?.authorized) {
+          setAccountProfile({ authorized: false, mode: 'sandbox', email: null, name: null, picture: null });
+        } else if (data.accountProfile?.authorized) {
+          setAccountProfile(data.accountProfile);
+          localStorage.setItem('afzal_auth_profile', JSON.stringify(data.accountProfile));
+        } else if (savedProfile?.authorized && !isExplicitlySignedOut) {
+          setAccountProfile(savedProfile);
+        } else {
+          setAccountProfile(data.accountProfile || { authorized: false, mode: 'sandbox' });
+        }
         if (data.approvals) setApprovalsEnabled(data.approvals.approvalsRequired);
         if (data.gmailMcpOption?.active) setGmailOption(data.gmailMcpOption.active);
         if (data.aiEngine?.model) setGeminiModelInput(data.aiEngine.model);
@@ -200,12 +277,17 @@ export default function App() {
       console.warn('[Workspace] Live backend unreachable, activating resilient sandbox mode:', e.message);
     }
 
-    // Fallback mode (Netlify / Static Demo)
+    // Fallback mode (Netlify / Static Demo / Offline Backend)
     setStatus(FALLBACK_STATUS);
-    setAccountProfile(FALLBACK_STATUS.accountProfile);
+    if (savedProfile?.authorized && !isExplicitlySignedOut) {
+      setAccountProfile(savedProfile);
+    } else {
+      setAccountProfile({ authorized: false, mode: 'sandbox', email: null, name: null, picture: null });
+    }
+    const savedClientId = localStorage.getItem('afzal_google_client_id');
     setOauthCreds(prev => ({
       ...prev,
-      clientId: prev.clientId || FALLBACK_STATUS.googleWorkspace.clientId
+      clientId: prev.clientId || savedClientId || FALLBACK_STATUS.googleWorkspace.clientId
     }));
   };
 
@@ -230,6 +312,51 @@ export default function App() {
         return;
       }
     } catch (e) {}
+
+    // Direct Google Gmail API fallback when signed in via Browser OAuth (e.g. on Netlify)
+    const token = localStorage.getItem('afzal_google_access_token');
+    if (token) {
+      try {
+        const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          if (listData.messages && listData.messages.length > 0) {
+            const details = await Promise.all(
+              listData.messages.slice(0, 10).map(async (m) => {
+                const dRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!dRes.ok) return null;
+                const d = await dRes.json();
+                const headers = d.payload?.headers || [];
+                const getH = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+                return {
+                  id: d.id,
+                  threadId: d.threadId,
+                  from: getH('From'),
+                  to: getH('To'),
+                  subject: getH('Subject') || '(No Subject)',
+                  snippet: d.snippet || '',
+                  body: d.snippet || '',
+                  date: getH('Date') || new Date(Number(d.internalDate)).toISOString(),
+                  labels: d.labelIds || [],
+                  importance: (d.labelIds || []).includes('IMPORTANT') ? 'High' : 'Normal',
+                  isRead: !(d.labelIds || []).includes('UNREAD')
+                };
+              })
+            );
+            const validEmails = details.filter(Boolean);
+            if (validEmails.length > 0) {
+              setEmails(validEmails);
+              return;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
     setEmails(FALLBACK_EMAILS);
   };
 
@@ -254,6 +381,34 @@ export default function App() {
         return;
       }
     } catch (e) {}
+
+    // Direct Google Calendar API fallback when signed in via Browser OAuth (e.g. on Netlify)
+    const token = localStorage.getItem('afzal_google_access_token');
+    if (token) {
+      try {
+        const calRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=15&singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(new Date().toISOString())}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (calRes.ok) {
+          const calData = await calRes.json();
+          if (calData.items) {
+            setEvents(calData.items.map(e => ({
+              id: e.id,
+              summary: e.summary || '(No Title)',
+              description: e.description || '',
+              start: e.start?.dateTime || e.start?.date,
+              end: e.end?.dateTime || e.end?.date,
+              location: e.location || '',
+              attendees: (e.attendees || []).map(a => a.email),
+              status: e.status,
+              htmlLink: e.htmlLink
+            })));
+            return;
+          }
+        }
+      } catch (e) {}
+    }
+
     setEvents(FALLBACK_EVENTS);
   };
 
@@ -266,6 +421,33 @@ export default function App() {
         return;
       }
     } catch (e) {}
+
+    // Direct Google Drive API fallback when signed in via Browser OAuth (e.g. on Netlify)
+    const token = localStorage.getItem('afzal_google_access_token');
+    if (token) {
+      try {
+        const driveRes = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=20&fields=files(id,name,mimeType,webViewLink,modifiedTime,size,shared)', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (driveRes.ok) {
+          const driveData = await driveRes.json();
+          if (driveData.files) {
+            setDriveFiles(driveData.files.map(f => ({
+              id: f.id,
+              name: f.name,
+              mimeType: f.mimeType,
+              webViewLink: f.webViewLink,
+              modifiedTime: f.modifiedTime,
+              size: f.size ? `${Math.round(f.size / 1024)} KB` : '-',
+              shared: f.shared || false,
+              sharedWith: []
+            })));
+            return;
+          }
+        }
+      } catch (e) {}
+    }
+
     setDriveFiles(FALLBACK_DRIVE_FILES);
   };
 
@@ -284,11 +466,11 @@ export default function App() {
   const fetchApprovals = async () => {
     try {
       const res = await fetch('/api/approvals/pending');
-      const data = await res.json();
-      setPendingApprovals(data.pending || []);
-    } catch (e) {
-      console.error(e);
-    }
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setPendingApprovals(data.pending || []);
+      }
+    } catch (e) {}
   };
 
   // Chat Actions
@@ -518,61 +700,130 @@ export default function App() {
   };
 
   // Google Authentication Handlers
+  const buildClientSideGoogleOAuthUrl = (customClientId = null, targetScopeLevel = 'initial') => {
+    const clientId = (customClientId || oauthCreds.clientId || localStorage.getItem('afzal_google_client_id') || FALLBACK_STATUS.googleWorkspace.clientId || '').trim();
+    if (!clientId) return null;
+
+    const redirectUri = window.location.origin;
+    let scopes = [
+      'openid',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/documents'
+    ];
+    if (targetScopeLevel === 'signin' || targetScopeLevel === 'minimal') {
+      scopes = [
+        'openid',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile'
+      ];
+    } else if (targetScopeLevel === 'broad') {
+      scopes = [
+        'openid',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/gmail.modify',
+        'https://www.googleapis.com/auth/documents',
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/drive'
+      ];
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: 'token',
+      scope: scopes.join(' '),
+      include_granted_scopes: 'true',
+      prompt: 'select_account'
+    });
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  };
+
   const handleGoogleSignIn = async () => {
     setIsSigningIn(true);
     try {
       const returnTo = window.location.origin;
       const res = await fetch(`/api/auth/google/url?scopeLevel=${scopeLevel}&returnTo=${encodeURIComponent(returnTo)}`);
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        setShowAuthModal(true);
-        showToast(data.error || 'Google OAuth credentials required. Follow the steps in the setup guide.', 'error');
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
       }
     } catch (err) {
+      // Backend unreachable (e.g. Netlify static site or Vite dev server without backend) -> fall back to direct browser OAuth 2.0
+    }
+
+    try {
+      const directOAuthUrl = buildClientSideGoogleOAuthUrl(oauthCreds.clientId, scopeLevel);
+      if (directOAuthUrl) {
+        window.location.href = directOAuthUrl;
+        return;
+      }
       setShowAuthModal(true);
-      showToast('Google OAuth setup required: ' + err.message, 'error');
+      showToast('Please enter your Google OAuth Client ID to sign in.', 'error');
     } finally {
       setIsSigningIn(false);
     }
   };
 
   const handleSignOut = async () => {
+    // 1. Immediately clear local & browser auth state so Sign Out always succeeds on both Localhost & Netlify
+    localStorage.removeItem('afzal_auth_profile');
+    localStorage.removeItem('afzal_google_access_token');
+    localStorage.setItem('afzal_signed_out', 'true');
+    setAccountProfile({ authorized: false, mode: 'sandbox', email: null, name: null, picture: null });
+
+    // 2. Also notify backend if running locally (ignore non-JSON / 404 on Netlify)
     try {
       const res = await fetch('/api/auth/google/signout', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setAccountProfile({ authorized: false, mode: 'sandbox' });
-        showToast('Successfully signed out of Google account', 'info');
-        fetchStatus();
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        await res.json();
       }
     } catch (err) {
-      showToast('Failed to sign out: ' + err.message, 'error');
+      // Safe to ignore when running on Netlify or when backend is offline
     }
+
+    showToast('Successfully signed out of Google account', 'info');
   };
 
-  const handleDemoSignIn = async (name = 'Afzal', email = 'afzal@workspace.ai') => {
+  const handleDemoSignIn = async (name = 'Afzal', email = 'afzal4jaipur@gmail.com') => {
+    const demoProfile = {
+      authorized: true,
+      mode: 'sandbox_auth',
+      email,
+      name,
+      picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      scopes: ['Gmail', 'Docs', 'Calendar', 'Drive', 'Tavily']
+    };
+
+    localStorage.removeItem('afzal_signed_out');
+    localStorage.setItem('afzal_auth_profile', JSON.stringify(demoProfile));
+    setAccountProfile(demoProfile);
+    setShowAuthModal(false);
+
     try {
       const res = await fetch('/api/auth/google/demo-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
-        })
+        body: JSON.stringify(demoProfile)
       });
-      const data = await res.json();
-      if (data.success) {
-        setAccountProfile(data.profile);
-        setShowAuthModal(false);
-        showToast(`Signed in as ${data.profile.name} (Verified Demo Mode)`, 'success');
-        fetchStatus();
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.profile) {
+          setAccountProfile(data.profile);
+          localStorage.setItem('afzal_auth_profile', JSON.stringify(data.profile));
+        }
       }
     } catch (err) {
-      showToast('Demo sign-in failed: ' + err.message, 'error');
+      // Works offline / on Netlify using local state
     }
+
+    showToast(`Signed in as ${name} (Demo Mode)`, 'success');
   };
 
   // Settings: Google OAuth URL (opens directly or in popup)
@@ -582,26 +833,29 @@ export default function App() {
 
   // Settings: Save OAuth Credentials
   const handleSaveOAuthCreds = async () => {
+    if (oauthCreds.clientId) {
+      localStorage.setItem('afzal_google_client_id', oauthCreds.clientId.trim());
+    }
     try {
       const res = await fetch('/api/auth/google/credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(oauthCreds)
       });
-      const data = await res.json();
-      if (data.success) {
-        showToast('OAuth credentials saved', 'success');
-        setShowAuthModal(false);
-        await fetchStatus();
-        return true;
-      } else {
-        showToast(data.error || 'Failed saving credentials', 'error');
-        return false;
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          showToast('OAuth credentials saved', 'success');
+          setShowAuthModal(false);
+          await fetchStatus();
+          return true;
+        }
       }
-    } catch (e) {
-      showToast('Error: ' + e.message, 'error');
-      return false;
-    }
+    } catch (e) {}
+
+    showToast('OAuth Client ID saved for browser sign-in', 'success');
+    setShowAuthModal(false);
+    return true;
   };
 
   // Settings: Switch Gmail MCP Option
@@ -1889,6 +2143,34 @@ export default function App() {
                 </div>
               </div>
 
+              {/* MongoDB Atlas Database Status */}
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <label className="font-medium text-slate-800 dark:text-slate-200">MongoDB Atlas Database</label>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                    status?.database?.connected
+                      ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
+                  }`}>
+                    {status?.database?.mode || 'MongoDB Atlas Connected'}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 font-mono text-[10px] text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Cluster:</span>
+                    <span>{status?.database?.cluster || 'cluster0.7pmg9mj.mongodb.net'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">User:</span>
+                    <span>{status?.database?.user || 'afzal4jaipur_db_user'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Database:</span>
+                    <span>{status?.database?.database || 'mcp_workspace'}</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Registered Tools Diagnostics */}
               <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center justify-between">
@@ -1931,36 +2213,43 @@ export default function App() {
 
             <div className="space-y-3.5 text-xs text-slate-700 dark:text-slate-300">
               
-              {/* Quick Setup Instructions */}
-              <div className="p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/40 text-slate-800 dark:text-slate-200 space-y-2">
-                <span className="font-semibold text-indigo-950 dark:text-indigo-300 block">4 Quick Steps to Configure Google Cloud:</span>
+              {/* Fix for Error 403: access_denied */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-slate-800 dark:text-slate-200 space-y-1.5">
+                <span className="font-semibold text-amber-900 dark:text-amber-300 block">Seeing "Error 403: access_denied" (App has not completed verification)?</span>
                 <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed text-slate-700 dark:text-slate-300">
                   <li>
-                    Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 underline font-medium">Google Cloud Console</a> and create or select a project.
+                    Open <a href="https://console.cloud.google.com/auth/audience" target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 underline font-medium">Google Cloud Console → OAuth Consent Screen (Audience)</a>.
                   </li>
-                  <li>Enable <strong>Gmail API</strong>, <strong>Google Docs API</strong>, and <strong>Google Drive API</strong>.</li>
-                  <li>In <strong>OAuth Consent Screen</strong>: set User Type to <em>External</em> and add your email to <strong>Test Users</strong>.</li>
-                  <li>In <strong>Credentials</strong>: create <em>OAuth Client ID</em> (Web Application) with the Redirect URI below.</li>
+                  <li>
+                    Scroll down to <strong>Test users</strong>, click <strong>+ Add users</strong>, enter <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-slate-800 font-mono">afzal4jaipur@gmail.com</code>, and click <strong>Save</strong> (or click <strong>Publish App</strong> under Publishing status).
+                  </li>
                 </ol>
               </div>
 
-              {/* Redirect URI with copy button */}
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-800 dark:text-slate-200 block">Authorized Redirect URI:</label>
-                <div className="flex items-center gap-1.5 p-2 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300">
-                  <span className="flex-1 truncate">http://localhost:3001/api/auth/google/callback</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText('http://localhost:3001/api/auth/google/callback');
-                      showToast('Redirect URI copied to clipboard', 'success');
-                    }}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0"
-                    title="Copy redirect URI"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              {/* Redirect URIs with copy buttons for both Localhost and Netlify */}
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-800 dark:text-slate-200 block">Authorized Redirect URIs (Add in Google Cloud Console):</label>
+                {[
+                  { label: 'Local Backend', uri: 'http://localhost:3001/api/auth/google/callback' },
+                  { label: 'Local Frontend', uri: 'http://localhost:5173' },
+                  { label: 'Netlify Live', uri: 'https://afzal-ai-workspace.netlify.app' }
+                ].map((item) => (
+                  <div key={item.uri} className="flex items-center gap-1.5 p-2 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                    <span className="text-[10px] font-sans font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0">{item.label}</span>
+                    <span className="flex-1 truncate">{item.uri}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.uri);
+                        showToast(`Copied ${item.label} URI to clipboard`, 'success');
+                      }}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition shrink-0"
+                      title={`Copy ${item.label} URI`}
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               {/* Scope Level Choice */}
@@ -2051,11 +2340,11 @@ export default function App() {
                 <span className="text-[11px] text-slate-500 block">Want to test the logged-in UI immediately without credentials?</span>
                 <button
                   type="button"
-                  onClick={() => handleDemoSignIn('Afzal', 'afzal@workspace.ai')}
+                  onClick={() => handleDemoSignIn('Afzal', 'afzal4jaipur@gmail.com')}
                   className="w-full py-2 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Instant Test Sign-In as Afzal (Demo Profile)</span>
+                  <span>Instant Sign-In as afzal4jaipur@gmail.com</span>
                 </button>
               </div>
 

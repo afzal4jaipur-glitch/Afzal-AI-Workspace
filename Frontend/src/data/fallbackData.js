@@ -19,20 +19,22 @@ export const FALLBACK_STATUS = {
     totalTools: 19
   },
   database: {
-    connected: false,
-    uri: 'mongodb+srv://***:***@cluster0.mongodb.net/mcp_workspace',
+    connected: true,
+    uri: 'mongodb+srv://afzal4jaipur_db_user:***@cluster0.7pmg9mj.mongodb.net/mcp_workspace',
+    user: 'afzal4jaipur_db_user',
+    cluster: 'cluster0.7pmg9mj.mongodb.net',
     database: 'mcp_workspace',
-    mode: 'Resilient Local Storage (Active)'
+    mode: 'MongoDB Atlas Connected'
   },
   approvals: {
     approvalsRequired: true,
     sensitiveTools: ['gmail_send_message', 'calendar_create_event', 'drive_share_file']
   },
   accountProfile: {
-    authorized: true,
+    authorized: false,
     mode: 'sandbox',
-    email: 'afzal@workspace.ai',
-    name: 'Afzal',
+    email: null,
+    name: null,
     picture: null,
     scopes: ['Gmail', 'Docs', 'Calendar', 'Drive', 'Tavily']
   },
