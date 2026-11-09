@@ -3,7 +3,7 @@ import {
   Sparkles, MessageSquare, Mail, FileText, Calendar, HardDrive, Globe, 
   History, ShieldCheck, Settings, Plus, Send, Copy, Check, ChevronLeft, 
   ChevronRight, ExternalLink, Menu, X, Sun, Moon, Laptop, RotateCw, 
-  Search, ShieldAlert, Key, CheckCircle2, AlertCircle, Bot, User, ArrowUpRight, LogOut
+  Search, ShieldAlert, Key, CheckCircle2, AlertCircle, AlertTriangle, Bot, User, ArrowUpRight, LogOut
 } from 'lucide-react';
 import MarkdownRenderer from './components/MarkdownRenderer';
 import { 
@@ -1955,7 +1955,7 @@ export default function App() {
         {accountProfile?.authorized && needsScopeUpgrade && (
           <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/60 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-200">
-              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
               <span>
                 <strong>Live Gmail & Drive Permission Needed:</strong> Your earlier sign-in only granted basic profile access, so demo items are shown. Click to authorize full live Gmail, Drive, Docs & Calendar access.
               </span>
