@@ -273,8 +273,8 @@ app.get('/api/auth/google/url', (req, res) => {
     const origin = returnTo || req.headers.referer || 'http://localhost:3001';
     const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback';
     const state = Buffer.from(JSON.stringify({ returnTo: origin, redirectUri })).toString('base64');
-    const url = googleService.generateAuthUrl(clientId, clientSecret, redirectUri, scopeLevel || 'signin', state);
-    res.json({ url, scopeLevel: scopeLevel || 'signin' });
+    const url = googleService.generateAuthUrl(clientId, clientSecret, redirectUri, scopeLevel || 'broad', state);
+    res.json({ url, scopeLevel: scopeLevel || 'broad' });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -325,7 +325,8 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const email = authResult.profile?.email || '';
     const name = authResult.profile?.name || '';
     const picture = authResult.profile?.picture || '';
-    res.redirect(`${returnBase}?auth=success&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&picture=${encodeURIComponent(picture)}`);
+    const accessTokenParam = authResult.accessToken ? `&access_token=${encodeURIComponent(authResult.accessToken)}` : '';
+    res.redirect(`${returnBase}?auth=success&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&picture=${encodeURIComponent(picture)}${accessTokenParam}`);
   } catch (err) {
     res.redirect(`${returnBase}?auth=error&message=${encodeURIComponent(err.message)}`);
   }

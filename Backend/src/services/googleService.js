@@ -522,9 +522,11 @@ class GoogleService {
       'https://www.googleapis.com/auth/drive'
     ];
 
-    let scopes = INITIAL_SCOPES;
+      let scopes = BROAD_SCOPES;
     if (scopeLevel === 'signin' || scopeLevel === 'minimal') {
       scopes = SIGNIN_SCOPES;
+    } else if (scopeLevel === 'initial') {
+      scopes = INITIAL_SCOPES;
     } else if (scopeLevel === 'broad') {
       scopes = BROAD_SCOPES;
     }
@@ -628,6 +630,7 @@ class GoogleService {
 
     return {
       success: true,
+      accessToken: tokens.access_token || null,
       refreshToken: tokens.refresh_token,
       profile,
       mode: 'live'
@@ -730,13 +733,18 @@ class GoogleService {
   async listDriveFiles(options = {}) {
     if (this.getMode() === 'live' && this.driveClient) {
       try {
-        const qParts = [];
-        if (options.query) qParts.push(`name contains '${options.query}'`);
-        if (options.mimeType) qParts.push(`mimeType = '${options.mimeType}'`);
+        const qParts = ['trashed = false'];
+        if (options.query) {
+          const safeQ = String(options.query).replace(/'/g, "\\'");
+          qParts.push(`name contains '${safeQ}'`);
+        }
+        if (options.mimeType) {
+          qParts.push(`mimeType = '${options.mimeType}'`);
+        }
 
         const res = await this.driveClient.files.list({
-          pageSize: options.pageSize || 20,
-          q: qParts.length ? qParts.join(' and ') : undefined,
+          pageSize: options.pageSize || 50,
+          q: qParts.join(' and '),
           fields: 'files(id, name, mimeType, webViewLink, modifiedTime, size, shared, owners)'
         });
 
@@ -748,11 +756,14 @@ class GoogleService {
           modifiedTime: f.modifiedTime,
           size: f.size ? `${Math.round(f.size / 1024)} KB` : '-',
           shared: f.shared || false,
-          sharedWith: (f.owners || []).map(o => o.emailAddress)
+          sharedWith: (f.owners || []).map(o => o.emailAddress),
+          source: 'live_google_drive'
         }));
       } catch (err) {
         console.error('[GoogleService] Live Drive listFiles error, falling back to sandbox:', err.message);
-        return sandboxStore.listDriveFiles(options);
+        const fallbackFiles = sandboxStore.listDriveFiles(options);
+        fallbackFiles._liveError = err.message;
+        return fallbackFiles;
       }
     }
     return sandboxStore.listDriveFiles(options);

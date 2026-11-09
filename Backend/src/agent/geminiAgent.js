@@ -475,7 +475,7 @@ Please approve or reject below to proceed.`,
         engine: 'Workspace Smart Agent (MCP Drive Connected)',
         toolsCalled: ['drive_share_file']
       };
-    } else if (query.includes('folder')) {
+    } else if (query.includes('create') && query.includes('folder')) {
       const folderNameMatch = userInstruction.match(/(folder|named|called)\s+['"]?([^'"]+)['"]?/i);
       const folderName = folderNameMatch ? folderNameMatch[2] : 'AI Workshop Resources 2026';
 
@@ -508,19 +508,29 @@ Please approve or reject below to proceed.`,
         toolsCalled: ['drive_create_folder']
       };
     } else {
+      // Extract optional search keyword (e.g. "How many files in Google Drive contain the word CV")
+      const keywordMatch =
+        userInstruction.match(/(?:contain(?:s|ing)?(?:\s+the\s+word)?|with(?:\s+the\s+word)?|named|called|matching|about|for)\s+['"]?([a-zA-Z0-9_.-]+)['"]?/i) ||
+        userInstruction.match(/['"]([^'"]+)['"]/);
+      const stopWords = new Set(['google', 'drive', 'files', 'file', 'folder', 'folders', 'the', 'word', 'in', 'my', 'all', 'recent']);
+      const searchKeyword = keywordMatch && !stopWords.has(keywordMatch[1].toLowerCase()) ? keywordMatch[1].trim() : '';
+
       steps.push({
         type: 'plan',
-        title: 'Action Planned: List Google Drive Files via MCP',
-        content: 'Invoking drive_list_files MCP tool to retrieve workspace drive assets.'
+        title: searchKeyword ? `Action Planned: Search Google Drive Files for "${searchKeyword}"` : 'Action Planned: List Google Drive Files via MCP',
+        content: searchKeyword
+          ? `Invoking drive_list_files MCP tool with query="${searchKeyword}" to count and list matching Drive assets.`
+          : 'Invoking drive_list_files MCP tool to retrieve workspace drive assets.'
       });
 
       const tStart = Date.now();
+      const toolArgs = searchKeyword ? { query: searchKeyword, pageSize: 50 } : { pageSize: 20 };
       steps.push({
         type: 'tool_call',
         tool: 'drive_list_files',
-        args: { pageSize: 10 }
+        args: toolArgs
       });
-      const driveRes = await callTool('drive_list_files', { pageSize: 10 });
+      const driveRes = await callTool('drive_list_files', toolArgs);
       steps.push({
         type: 'tool_result',
         tool: 'drive_list_files',
@@ -529,14 +539,28 @@ Please approve or reject below to proceed.`,
       });
 
       const files = driveRes.files || [];
-      let replyText = `Here are your recent files and folders in Google Drive:\n\n`;
-      files.forEach((f, idx) => {
-        const isFolder = f.mimeType?.includes('folder');
-        replyText += `${idx + 1}. [${f.name}](${f.webViewLink}) (${isFolder ? 'Folder' : f.mimeType})\n`;
-        if (f.sharedWith && f.sharedWith.length > 0) {
-          replyText += `   *Shared with: ${f.sharedWith.join(', ')}*\n`;
+      let replyText = '';
+
+      if (searchKeyword) {
+        if (files.length === 0) {
+          replyText = `I searched your Google Drive and found **0** files containing the word **"${searchKeyword}"**.`;
+        } else {
+          replyText = `There ${files.length === 1 ? 'is **1** file' : `are **${files.length}** files`} in your Google Drive containing the word **"${searchKeyword}"**:\n\n`;
+          files.forEach((f, idx) => {
+            const isFolder = f.mimeType?.includes('folder');
+            replyText += `${idx + 1}. [${f.name}](${f.webViewLink || '#'}) (${isFolder ? 'Folder' : f.mimeType || 'File'})\n`;
+          });
         }
-      });
+      } else {
+        replyText = `Here are your recent files and folders in Google Drive (${files.length} total):\n\n`;
+        files.forEach((f, idx) => {
+          const isFolder = f.mimeType?.includes('folder');
+          replyText += `${idx + 1}. [${f.name}](${f.webViewLink || '#'}) (${isFolder ? 'Folder' : f.mimeType})\n`;
+          if (f.sharedWith && f.sharedWith.length > 0) {
+            replyText += `   *Shared with: ${f.sharedWith.join(', ')}*\n`;
+          }
+        });
+      }
 
       return {
         reply: replyText,
