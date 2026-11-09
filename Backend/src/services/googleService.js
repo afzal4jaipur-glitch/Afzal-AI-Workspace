@@ -100,13 +100,16 @@ class GoogleService {
   async listMessages(options = {}) {
     if (this.getMode() === 'live' && this.gmailClient) {
       try {
-        const maxResults = options.maxResults || 5;
-        const res = await this.gmailClient.users.messages.list({
-          userId: 'me',
-          maxResults,
-          q: options.q || '',
-          labelIds: options.labelIds
-        });
+        const maxResults = options.maxResults || 15;
+        const [res, profileRes] = await Promise.all([
+          this.gmailClient.users.messages.list({
+            userId: 'me',
+            maxResults,
+            q: options.q || '',
+            labelIds: options.labelIds
+          }),
+          this.gmailClient.users.getProfile({ userId: 'me' }).catch(() => null)
+        ]);
 
         const messages = [];
         if (res.data.messages) {
@@ -129,19 +132,28 @@ class GoogleService {
               date: getHeader('Date') || new Date(Number(detail.data.internalDate)).toISOString(),
               labels: detail.data.labelIds || [],
               importance: (detail.data.labelIds || []).includes('IMPORTANT') ? 'High' : 'Normal',
-              isRead: !(detail.data.labelIds || []).includes('UNREAD')
+              isRead: !(detail.data.labelIds || []).includes('UNREAD'),
+              source: 'live_gmail'
             });
           }
         }
 
         return {
           messages,
+          messagesTotal: profileRes?.data?.messagesTotal || res.data.resultSizeEstimate || messages.length,
+          threadsTotal: profileRes?.data?.threadsTotal || null,
           resultSizeEstimate: res.data.resultSizeEstimate || messages.length,
-          nextPageToken: res.data.nextPageToken || null
+          nextPageToken: res.data.nextPageToken || null,
+          source: 'live_gmail'
         };
       } catch (err) {
         console.error('[GoogleService] Live Gmail list error, falling back to sandbox:', err.message);
-        return sandboxStore.listMessages(options);
+        const fallback = sandboxStore.listMessages(options);
+        if (err.message?.toLowerCase().includes('insufficient authentication scopes')) {
+          fallback.insufficientScopes = true;
+        }
+        fallback.liveError = err.message;
+        return fallback;
       }
     }
 

@@ -74,6 +74,8 @@ export default function App() {
   const [approvalsEnabled, setApprovalsEnabled] = useState(true);
   const [accountProfile, setAccountProfile] = useState(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [gmailTotalCount, setGmailTotalCount] = useState(null);
+  const [needsScopeUpgrade, setNeedsScopeUpgrade] = useState(false);
 
   // Toast Notification
   const [toast, setToast] = useState(null);
@@ -127,7 +129,9 @@ export default function App() {
       const accessToken = hashParams.get('access_token');
       if (accessToken) {
         localStorage.setItem('afzal_google_access_token', accessToken);
+        localStorage.setItem('afzal_scope_version', 'v2_broad');
         localStorage.removeItem('afzal_signed_out');
+        setNeedsScopeUpgrade(false);
         window.history.replaceState({}, document.title, window.location.pathname);
 
         fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -180,6 +184,8 @@ export default function App() {
         const accessToken = params.get('access_token') || null;
         if (accessToken) {
           localStorage.setItem('afzal_google_access_token', accessToken);
+          localStorage.setItem('afzal_scope_version', 'v2_broad');
+          setNeedsScopeUpgrade(false);
         }
         const profile = {
           authorized: true,
@@ -313,6 +319,9 @@ export default function App() {
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json();
         setEmails(data.messages || []);
+        if (data.messagesTotal) setGmailTotalCount(data.messagesTotal);
+        if (data.insufficientScopes) setNeedsScopeUpgrade(true);
+        else if (data.source === 'live_gmail') setNeedsScopeUpgrade(false);
         return;
       }
     } catch (e) {}
@@ -321,14 +330,31 @@ export default function App() {
     const token = localStorage.getItem('afzal_google_access_token');
     if (token) {
       try {
-        const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (listRes.ok) {
+        const [listRes, profRes] = await Promise.all([
+          fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => null)
+        ]);
+        if (profRes && profRes.ok) {
+          const profData = await profRes.json();
+          if (profData.messagesTotal !== undefined) {
+            setGmailTotalCount(profData.messagesTotal);
+          }
+        }
+        if (listRes.status === 401 || listRes.status === 403) {
+          setNeedsScopeUpgrade(true);
+        } else if (listRes.ok) {
+          setNeedsScopeUpgrade(false);
           const listData = await listRes.json();
+          if (listData.resultSizeEstimate && !gmailTotalCount) {
+            setGmailTotalCount(listData.resultSizeEstimate);
+          }
           if (listData.messages && listData.messages.length > 0) {
             const details = await Promise.all(
-              listData.messages.slice(0, 10).map(async (m) => {
+              listData.messages.slice(0, 15).map(async (m) => {
                 const dRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date`, {
                   headers: { Authorization: `Bearer ${token}` }
                 });
@@ -347,7 +373,8 @@ export default function App() {
                   date: getH('Date') || new Date(Number(d.internalDate)).toISOString(),
                   labels: d.labelIds || [],
                   importance: (d.labelIds || []).includes('IMPORTANT') ? 'High' : 'Normal',
-                  isRead: !(d.labelIds || []).includes('UNREAD')
+                  isRead: !(d.labelIds || []).includes('UNREAD'),
+                  source: 'live_gmail'
                 };
               })
             );
@@ -359,6 +386,8 @@ export default function App() {
           }
         }
       } catch (e) {}
+    } else if (localStorage.getItem('afzal_auth_profile')) {
+      setNeedsScopeUpgrade(true);
     }
 
     setEmails(FALLBACK_EMAILS);
@@ -644,9 +673,13 @@ export default function App() {
               setDriveFiles(matchedFiles);
             }
           } else if (driveRes.status === 401 || driveRes.status === 403) {
-            scopeNotice = `\n\n> 💡 **Note:** To search your live personal Google Drive files, click **Sign Out** in the top-right corner and click **Sign in with Google** once more to grant **Full Workspace (Drive, Gmail, Docs, Calendar)** permissions.`;
+            setNeedsScopeUpgrade(true);
+            scopeNotice = `\n\n> ⚠️ **Action Required for Live Google Drive:** Your current sign-in session only has basic profile permissions. Click the **"Authorize Live Gmail & Drive Access"** button at the top of the screen (or Sign Out and Sign In again) to connect your real Google Drive files.`;
           }
         } catch (e) {}
+      } else if (accountProfile?.authorized) {
+        setNeedsScopeUpgrade(true);
+        scopeNotice = `\n\n> ⚠️ **Action Required for Live Google Drive:** Click the **"Authorize Live Gmail & Drive Access"** button at the top of the screen to grant live Google Drive permissions.`;
       }
 
       // Fallback to in-memory / workspace Drive files if live API was not used
@@ -677,7 +710,7 @@ export default function App() {
           replyText += scopeNotice;
         }
       } else {
-        replyText = `Here are your recent files and folders in Google Drive (${matchedFiles.length} total):\n\n`;
+        replyText = `There ${matchedFiles.length === 1 ? 'is **1** file/folder' : `are **${matchedFiles.length}** files and folders`} in your Google Drive:\n\n`;
         matchedFiles.forEach((f, idx) => {
           const isFolder = f.mimeType?.includes('folder');
           replyText += `${idx + 1}. [${f.name}](${f.webViewLink || '#'}) (${isFolder ? 'Folder' : f.mimeType || 'File'})\n`;
@@ -693,29 +726,180 @@ export default function App() {
     }
 
     // 3. Gmail Queries
-    if (query.includes('email') || query.includes('inbox') || query.includes('mail') || query.includes('messages')) {
-      steps.push(
-        { type: 'tool_call', tool: 'gmail_list_messages', args: { maxResults: 5 } },
-        { type: 'tool_result', tool: 'gmail_list_messages', durationMs: 39 }
-      );
-      const activeEmails = emails.length > 0 ? emails : FALLBACK_EMAILS;
+    if (query.includes('email') || query.includes('inbox') || query.includes('mail') || query.includes('messages') || query.includes('unread') || query.includes('sender')) {
+      const tStart = Date.now();
+      let emailSearchQuery = '';
+      const fromMatch = userInstruction.match(/(?:from|by)\s+['"]?([a-zA-Z0-9._@-]+)['"]?/i);
+      const aboutMatch = userInstruction.match(/(?:about|regarding|related to|containing|contain|with word|subject)\s+['"]?([^'"?.,!]+)['"]?/i);
+      if (fromMatch && !['my', 'the', 'gmail', 'inbox'].includes(fromMatch[1].toLowerCase())) {
+        emailSearchQuery = `from:${fromMatch[1].trim()}`;
+      } else if (aboutMatch) {
+        emailSearchQuery = aboutMatch[1].trim();
+      }
+
+      const isCountQuestion = /how\s*many|count|total|number\s+of/i.test(query);
+      const isUnreadQuestion = query.includes('unread');
+      const isLatestSingle = /(?:latest|last|newest|most\s+recent)\s+(?:email|mail|message)\b/i.test(query) || query.includes('who sent');
+
+      steps.push({
+        type: 'tool_call',
+        tool: 'gmail_list_messages',
+        args: { maxResults: 20, query: emailSearchQuery }
+      });
+
+      let activeEmails = null;
+      let totalInboxCount = gmailTotalCount;
+      let scopeNotice = '';
+
+      if (token) {
+        try {
+          const qParam = emailSearchQuery ? `&q=${encodeURIComponent(emailSearchQuery)}` : '';
+          const [listRes, profileRes] = await Promise.all([
+            fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20${qParam}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          ]);
+
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            if (typeof profileData.messagesTotal === 'number') {
+              totalInboxCount = profileData.messagesTotal;
+              setGmailTotalCount(profileData.messagesTotal);
+            }
+          }
+
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            const msgSummaries = listData.messages || [];
+            const detailed = await Promise.all(
+              msgSummaries.slice(0, 12).map(async (m) => {
+                const detailRes = await fetch(
+                  `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Date`,
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+                if (!detailRes.ok) return null;
+                const d = await detailRes.json();
+                const headers = d.payload?.headers || [];
+                const getH = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+                const labels = d.labelIds || [];
+                return {
+                  id: d.id,
+                  threadId: d.threadId,
+                  from: getH('From') || 'Unknown Sender',
+                  to: getH('To') || '',
+                  subject: getH('Subject') || '(No Subject)',
+                  date: getH('Date') || new Date().toISOString(),
+                  snippet: d.snippet || '',
+                  body: d.snippet || '',
+                  labels,
+                  unread: labels.includes('UNREAD'),
+                  importance: labels.includes('IMPORTANT') ? 'High' : 'Normal'
+                };
+              })
+            );
+            activeEmails = detailed.filter(Boolean);
+            if (!emailSearchQuery && activeEmails.length > 0) {
+              setEmails(activeEmails);
+            }
+          } else if (listRes.status === 401 || listRes.status === 403) {
+            setNeedsScopeUpgrade(true);
+            scopeNotice = `\n\n> ⚠️ **Action Required for Live Gmail:** Your current sign-in session only has basic profile permissions (from before your email was added as a test user). Click the **"Authorize Live Gmail & Drive Access"** button at the top of the screen to load your real Gmail inbox!`;
+          }
+        } catch (e) {}
+      } else if (accountProfile?.authorized) {
+        setNeedsScopeUpgrade(true);
+        scopeNotice = `\n\n> ⚠️ **Action Required for Live Gmail:** Click the **"Authorize Live Gmail & Drive Access"** button at the top of the screen to grant live Gmail permissions.`;
+      }
+
+      const usingFallback = activeEmails === null;
+      if (activeEmails === null) {
+        const baseEmails = emails.length > 0 ? emails : FALLBACK_EMAILS;
+        activeEmails = emailSearchQuery
+          ? baseEmails.filter(m =>
+              `${m.subject} ${m.from} ${m.snippet}`.toLowerCase().includes(emailSearchQuery.replace(/^from:/i, '').toLowerCase())
+            )
+          : baseEmails;
+      }
+
+      const unreadEmails = activeEmails.filter(m => m.unread || (m.labels || []).includes('UNREAD'));
       const importantEmails = activeEmails.filter(m => m.importance === 'High' || (m.labels || []).includes('IMPORTANT'));
-      let summaryText = `Here is a summary of your recent emails (${activeEmails.length} messages):\n\n`;
-      if (importantEmails.length > 0) {
-        summaryText += `### Priority Items\n\n`;
-        importantEmails.slice(0, 5).forEach((email, idx) => {
-          summaryText += `**${idx + 1}. ${email.subject}** — *${email.from}*\n${email.snippet}\n\n`;
+      const effectiveTotal = (!emailSearchQuery && totalInboxCount !== null && !usingFallback) ? totalInboxCount : activeEmails.length;
+
+      steps.push({
+        type: 'tool_result',
+        tool: 'gmail_list_messages',
+        durationMs: Math.max(25, Date.now() - tStart),
+        result: { count: activeEmails.length, totalInMailbox: effectiveTotal }
+      });
+
+      let replyText = '';
+      if (isCountQuestion) {
+        if (isUnreadQuestion) {
+          replyText = `You have **${unreadEmails.length}** unread ${unreadEmails.length === 1 ? 'email' : 'emails'} among your ${activeEmails.length} most recent messages.\n\n`;
+          unreadEmails.slice(0, 10).forEach((e, idx) => {
+            replyText += `${idx + 1}. **${e.subject}** — *${e.from}*\n`;
+          });
+        } else if (emailSearchQuery) {
+          replyText = `I found **${activeEmails.length}** ${activeEmails.length === 1 ? 'email' : 'emails'} in your Gmail matching **"${emailSearchQuery}"**:\n\n`;
+          activeEmails.slice(0, 10).forEach((e, idx) => {
+            replyText += `${idx + 1}. **${e.subject}** — *${e.from}*\n`;
+          });
+        } else {
+          const totalPhrase = (totalInboxCount !== null && !usingFallback && totalInboxCount > activeEmails.length)
+            ? `There are **${totalInboxCount} total emails** in your Gmail account (showing the **${activeEmails.length}** most recent messages below, with **${unreadEmails.length}** unread and **${importantEmails.length}** high-priority):`
+            : `There ${effectiveTotal === 1 ? 'is **1** email' : `are **${effectiveTotal}** emails`} currently loaded in your Gmail inbox (**${unreadEmails.length}** unread, **${importantEmails.length}** high-priority):`;
+          replyText = `${totalPhrase}\n\n`;
+          activeEmails.slice(0, 10).forEach((e, idx) => {
+            replyText += `${idx + 1}. **${e.subject}** — *${e.from}* ${e.unread ? '`(UNREAD)`' : ''}\n`;
+          });
+        }
+        replyText += scopeNotice;
+      } else if (isLatestSingle) {
+        if (activeEmails.length === 0) {
+          replyText = `Your inbox has no messages matching that criteria.${scopeNotice}`;
+        } else {
+          const latest = activeEmails[0];
+          replyText = `Your most recent email is:\n\n- **Subject:** ${latest.subject}\n- **From:** ${latest.from}\n- **Date:** ${latest.date}\n- **Snippet:** ${latest.snippet}${scopeNotice}`;
+        }
+      } else if (isUnreadQuestion) {
+        replyText = `You have **${unreadEmails.length}** unread ${unreadEmails.length === 1 ? 'email' : 'emails'}:\n\n`;
+        unreadEmails.slice(0, 10).forEach((e, idx) => {
+          replyText += `**${idx + 1}. ${e.subject}** — *${e.from}*\n${e.snippet}\n\n`;
         });
+        replyText += scopeNotice;
+      } else if (emailSearchQuery) {
+        if (activeEmails.length === 0) {
+          replyText = `I searched your Gmail and found **0** emails matching **"${emailSearchQuery}"**.${scopeNotice}`;
+        } else {
+          replyText = `I found **${activeEmails.length}** ${activeEmails.length === 1 ? 'email' : 'emails'} matching **"${emailSearchQuery}"**:\n\n`;
+          activeEmails.slice(0, 10).forEach((e, idx) => {
+            replyText += `**${idx + 1}. ${e.subject}** — *${e.from}*\n${e.snippet}\n\n`;
+          });
+          replyText += scopeNotice;
+        }
+      } else {
+        replyText = `Here is a summary of your recent emails (${activeEmails.length} messages shown${totalInboxCount && !usingFallback ? ` out of ${totalInboxCount} total in Gmail` : ''}):\n\n`;
+        if (importantEmails.length > 0) {
+          replyText += `### Priority Items\n\n`;
+          importantEmails.slice(0, 5).forEach((email, idx) => {
+            replyText += `**${idx + 1}. ${email.subject}** — *${email.from}*\n${email.snippet}\n\n`;
+          });
+        }
+        const otherEmails = activeEmails.filter(m => !importantEmails.includes(m));
+        if (otherEmails.length > 0) {
+          replyText += `### Recent Messages\n\n`;
+          otherEmails.slice(0, 8).forEach((email, idx) => {
+            replyText += `${idx + 1}. **${email.subject}** — *${email.from}*\n   ${(email.snippet || '').slice(0, 120)}\n`;
+          });
+        }
+        replyText += scopeNotice;
       }
-      const otherEmails = activeEmails.filter(m => !importantEmails.includes(m));
-      if (otherEmails.length > 0) {
-        summaryText += `### Other Recent Messages\n\n`;
-        otherEmails.slice(0, 5).forEach(email => {
-          summaryText += `- **${email.subject}** (${email.from}): ${(email.snippet || '').slice(0, 100)}...\n`;
-        });
-      }
+
       return {
-        reply: summaryText,
+        reply: replyText,
         steps,
         engine: 'Workspace Smart Agent (MCP Gmail)'
       };
@@ -723,6 +907,28 @@ export default function App() {
 
     // 4. Google Docs Queries
     if (query.includes('doc') || query.includes('document') || query.includes('notes')) {
+      const isCreateDoc = /create|write|make|new|generate|prepare|draft|explain/i.test(query);
+      const isCountQuestion = /how\s*many|count|total|number\s+of/i.test(query);
+      const activeDocs = docs.length > 0 ? docs : FALLBACK_DOCS;
+
+      if (!isCreateDoc) {
+        steps.push(
+          { type: 'tool_call', tool: 'docs_list_documents', args: {} },
+          { type: 'tool_result', tool: 'docs_list_documents', durationMs: 32, result: { count: activeDocs.length } }
+        );
+        let replyText = isCountQuestion
+          ? `There ${activeDocs.length === 1 ? 'is **1** document' : `are **${activeDocs.length}** documents`} in your Google Docs workspace:\n\n`
+          : `Here are your Google Docs documents (${activeDocs.length} total):\n\n`;
+        activeDocs.forEach((d, idx) => {
+          replyText += `${idx + 1}. **${d.title}** ${d.modifiedTime ? `*(Updated: ${new Date(d.modifiedTime).toLocaleDateString()})*` : ''}\n`;
+        });
+        return {
+          reply: replyText,
+          steps,
+          engine: 'Workspace Smart Agent (MCP Docs)'
+        };
+      }
+
       const titleMatch = userInstruction.match(/titled ['"]([^'"]+)['"]/i) || userInstruction.match(/title ['"]([^'"]+)['"]/i);
       const docTitle = titleMatch ? titleMatch[1] : 'AI Workshop Notes';
       const newDoc = {
@@ -748,12 +954,15 @@ export default function App() {
 
     // 5. Google Calendar Queries
     if (query.includes('calendar') || query.includes('meeting') || query.includes('event') || query.includes('schedule')) {
+      const isCountQuestion = /how\s*many|count|total|number\s+of/i.test(query);
       steps.push(
-        { type: 'tool_call', tool: 'calendar_list_events', args: { maxResults: 5 } },
+        { type: 'tool_call', tool: 'calendar_list_events', args: { maxResults: 10 } },
         { type: 'tool_result', tool: 'calendar_list_events', durationMs: 33 }
       );
       const activeEvents = events.length > 0 ? events : FALLBACK_EVENTS;
-      let replyText = `Here are your upcoming calendar events (${activeEvents.length} scheduled):\n\n`;
+      let replyText = isCountQuestion
+        ? `You have **${activeEvents.length}** upcoming ${activeEvents.length === 1 ? 'event' : 'events'} on your Google Calendar:\n\n`
+        : `Here are your upcoming calendar events (${activeEvents.length} scheduled):\n\n`;
       activeEvents.forEach((e, idx) => {
         replyText += `**${idx + 1}. ${e.summary}**\n${new Date(e.start).toLocaleString()}\n`;
         if (e.location) replyText += `Location: ${e.location}\n`;
@@ -807,6 +1016,7 @@ export default function App() {
 
     try {
       let data = null;
+      const browserToken = localStorage.getItem('afzal_google_access_token');
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
@@ -814,7 +1024,17 @@ export default function App() {
           body: JSON.stringify({ message: prompt, history: messages, bypassApproval })
         });
         if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
-          data = await res.json();
+          const backendData = await res.json();
+          if (backendData?.reply?.includes('Basic Profile only') || backendData?.reply?.includes('insufficient authentication scopes')) {
+            setNeedsScopeUpgrade(true);
+          }
+          // If the browser has a live OAuth access token and backend fell back to demo data, prefer live browser API execution
+          const backendUsedFallback = backendData?.reply?.includes('Elena Rostova') || backendData?.reply?.includes('Basic Profile only');
+          if (browserToken && backendUsedFallback) {
+            data = null;
+          } else {
+            data = backendData;
+          }
         }
       } catch (networkErr) {
         // Backend offline or running on Netlify static hosting -> fall back to client-side agent
@@ -1422,7 +1642,7 @@ export default function App() {
             </div>
             {!sidebarCollapsed && emails.length > 0 && (
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-normal">
-                {emails.length}
+                {gmailTotalCount ?? emails.length}
               </span>
             )}
           </button>
@@ -1730,6 +1950,24 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {/* Scope Upgrade Banner when user is signed in with basic profile only */}
+        {accountProfile?.authorized && needsScopeUpgrade && (
+          <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/60 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>
+                <strong>Live Gmail & Drive Permission Needed:</strong> Your earlier sign-in only granted basic profile access, so demo items are shown. Click to authorize full live Gmail, Drive, Docs & Calendar access.
+              </span>
+            </div>
+            <button
+              onClick={handleGoogleSignIn}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition shrink-0 cursor-pointer"
+            >
+              Authorize Live Gmail & Drive Access
+            </button>
+          </div>
+        )}
 
         {/* Tab 1: Chat Conversation View */}
         {activeTab === 'chat' && (

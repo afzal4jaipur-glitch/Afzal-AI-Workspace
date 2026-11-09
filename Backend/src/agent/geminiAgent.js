@@ -357,21 +357,32 @@ You can review or send it from your Gmail view at any time.`,
       };
     }
 
-    // Default Demo 1: Show latest 5 emails and summarize the important ones
+    // Extract optional search keyword for Gmail queries
+    const emailKeywordMatch =
+      userInstruction.match(/(?:contain(?:s|ing)?(?:\s+the\s+word)?|with(?:\s+the\s+word)?|from|about|subject|matching|for)\s+['"]?([a-zA-Z0-9_@.-]+)['"]?/i) ||
+      userInstruction.match(/['"]([^'"]+)['"]/);
+    const emailStopWords = new Set(['gmail', 'email', 'emails', 'inbox', 'mail', 'messages', 'message', 'the', 'my', 'in', 'there', 'are', 'is', 'all', 'recent', 'latest', 'important', 'unread', 'five', '5']);
+    const emailSearchQuery = emailKeywordMatch && !emailStopWords.has(emailKeywordMatch[1].toLowerCase()) ? emailKeywordMatch[1].trim() : '';
+
+    const isCountQuestion = /how\s*many|count|total|number\s+of/i.test(query);
+    const isUnreadQuestion = query.includes('unread');
+    const isLatestSingle = /(?:latest|last|newest|most\s+recent)\s+(?:email|mail|message)\b/i.test(query) || query.includes('who sent');
+
     steps.push({
       type: 'plan',
-      title: 'Action Planned: Retrieve & Analyze Latest Emails',
-      content: 'Invoking gmail_list_messages MCP tool to fetch the 5 most recent emails from Gmail inbox.'
+      title: emailSearchQuery ? `Action Planned: Search Gmail for "${emailSearchQuery}"` : 'Action Planned: Retrieve & Analyze Gmail Inbox',
+      content: `Invoking gmail_list_messages MCP tool${emailSearchQuery ? ` with query="${emailSearchQuery}"` : ''} to inspect inbox messages.`
     });
 
     const startTime = Date.now();
+    const listArgs = emailSearchQuery ? { maxResults: 20, q: emailSearchQuery } : { maxResults: 15 };
     steps.push({
       type: 'tool_call',
       tool: 'gmail_list_messages',
-      args: { maxResults: 5 }
+      args: listArgs
     });
 
-    const emailListResult = await callTool('gmail_list_messages', { maxResults: 5 });
+    const emailListResult = await callTool('gmail_list_messages', listArgs);
 
     steps.push({
       type: 'tool_result',
@@ -381,28 +392,82 @@ You can review or send it from your Gmail view at any time.`,
     });
 
     const messages = emailListResult.messages || [];
+    const totalInAccount = emailListResult.messagesTotal || emailListResult.resultSizeEstimate || messages.length;
+    const unreadEmails = messages.filter(m => !m.isRead || (m.labels || []).includes('UNREAD'));
     const importantEmails = messages.filter(m => m.importance === 'High' || (m.labels || []).includes('IMPORTANT'));
+    const scopeHint = emailListResult.insufficientScopes
+      ? `\n\n> 💡 **Live Gmail Permission Needed:** Your previous Google sign-in token only granted basic profile access. Click the **Sign Out** icon in the top-right corner and click **Sign in with Google** once more to grant **Live Gmail & Google Drive** permissions.`
+      : '';
 
-    let summaryText = `Here is a summary of your recent emails:\n\n`;
+    let replyText = '';
 
-    if (importantEmails.length > 0) {
-      summaryText += `### Priority Items\n\n`;
-      importantEmails.forEach((email, idx) => {
-        summaryText += `**${idx + 1}. ${email.subject}** — *${email.from}*\n`;
-        summaryText += `${email.snippet}\n\n`;
-      });
-    }
-
-    const normalEmails = messages.filter(m => !importantEmails.includes(m));
-    if (normalEmails.length > 0) {
-      summaryText += `### Other Recent Messages\n\n`;
-      normalEmails.forEach(email => {
-        summaryText += `- **${email.subject}** (${email.from}): ${email.snippet.slice(0, 90)}...\n`;
-      });
+    if (isCountQuestion) {
+      if (emailSearchQuery) {
+        replyText = `There ${messages.length === 1 ? 'is **1** email' : `are **${messages.length}** emails`} in your Gmail matching **"${emailSearchQuery}"**.`;
+        if (messages.length > 0) {
+          replyText += `\n\n`;
+          messages.slice(0, 10).forEach((m, idx) => {
+            replyText += `${idx + 1}. **${m.subject}** — *${m.from}* (${new Date(m.date).toLocaleDateString()})\n`;
+          });
+        }
+      } else if (isUnreadQuestion) {
+        replyText = `You have **${unreadEmails.length} unread ${unreadEmails.length === 1 ? 'email' : 'emails'}** out of ${messages.length} recent messages (${totalInAccount} total in inbox).`;
+        if (unreadEmails.length > 0) {
+          replyText += `\n\n`;
+          unreadEmails.forEach((m, idx) => {
+            replyText += `${idx + 1}. **${m.subject}** — *${m.from}*\n`;
+          });
+        }
+      } else {
+        replyText = `You have **${totalInAccount} total ${totalInAccount === 1 ? 'email' : 'emails'}** in your Gmail inbox (**${messages.length}** recent messages loaded, **${unreadEmails.length}** unread, and **${importantEmails.length}** marked high priority).\n\n### Recent Messages in Inbox\n\n`;
+        messages.slice(0, 8).forEach((m, idx) => {
+          replyText += `${idx + 1}. **${m.subject}** — *${m.from}* (${m.isRead ? 'Read' : '**Unread**'})\n`;
+        });
+      }
+      replyText += scopeHint;
+    } else if (isLatestSingle && messages.length > 0) {
+      const latest = messages[0];
+      replyText = `Your most recent email is:\n\n- **From:** ${latest.from}\n- **Subject:** ${latest.subject}\n- **Date:** ${new Date(latest.date).toLocaleString()}\n- **Preview:** ${latest.snippet}${scopeHint}`;
+    } else if (isUnreadQuestion) {
+      if (unreadEmails.length === 0) {
+        replyText = `You have **0 unread emails** in your recent inbox.${scopeHint}`;
+      } else {
+        replyText = `You have **${unreadEmails.length} unread ${unreadEmails.length === 1 ? 'email' : 'emails'}**:\n\n`;
+        unreadEmails.forEach((email, idx) => {
+          replyText += `**${idx + 1}. ${email.subject}** — *${email.from}*\n${email.snippet}\n\n`;
+        });
+        replyText += scopeHint;
+      }
+    } else if (emailSearchQuery) {
+      if (messages.length === 0) {
+        replyText = `I searched your Gmail inbox and found **0** emails matching **"${emailSearchQuery}"**.${scopeHint}`;
+      } else {
+        replyText = `I found **${messages.length}** ${messages.length === 1 ? 'email' : 'emails'} in your Gmail matching **"${emailSearchQuery}"**:\n\n`;
+        messages.forEach((email, idx) => {
+          replyText += `**${idx + 1}. ${email.subject}** — *${email.from}*\n${email.snippet}\n\n`;
+        });
+        replyText += scopeHint;
+      }
+    } else {
+      replyText = `Here is a summary of your recent emails (${messages.length} recent, ${totalInAccount} total in inbox):\n\n`;
+      if (importantEmails.length > 0) {
+        replyText += `### Priority Items\n\n`;
+        importantEmails.forEach((email, idx) => {
+          replyText += `**${idx + 1}. ${email.subject}** — *${email.from}*\n${email.snippet}\n\n`;
+        });
+      }
+      const normalEmails = messages.filter(m => !importantEmails.includes(m));
+      if (normalEmails.length > 0) {
+        replyText += `### Other Recent Messages\n\n`;
+        normalEmails.forEach(email => {
+          replyText += `- **${email.subject}** (${email.from}): ${(email.snippet || '').slice(0, 90)}...\n`;
+        });
+      }
+      replyText += scopeHint;
     }
 
     return {
-      reply: summaryText,
+      reply: replyText,
       steps,
       engine: 'Workspace Smart Agent (MCP Connected)',
       toolsCalled: ['gmail_list_messages']
@@ -571,7 +636,7 @@ Please approve or reject below to proceed.`,
     }
   }
 
-  // Task Detection: Demo 2 - Google Docs Automation
+  // Task Detection: Demo 2 - Google Docs Automation (List/Count vs Create)
   if (
     !query.includes('share') &&
     !query.includes('drive') &&
@@ -580,6 +645,34 @@ Please approve or reject below to proceed.`,
      query.includes('document') || 
      query.includes('notes'))
   ) {
+    const isCreateDoc = /create|write|make|new|generate|prepare|draft|explain/i.test(query);
+    if (!isCreateDoc) {
+      const tStart = Date.now();
+      steps.push({
+        type: 'tool_call',
+        tool: 'docs_list_documents',
+        args: { pageSize: 20 }
+      });
+      const docsRes = await callTool('docs_list_documents', { pageSize: 20 });
+      steps.push({
+        type: 'tool_result',
+        tool: 'docs_list_documents',
+        durationMs: Date.now() - tStart,
+        result: docsRes
+      });
+      const docList = docsRes.documents || [];
+      let replyText = `You have **${docList.length} ${docList.length === 1 ? 'document' : 'documents'}** in your Google Docs workspace:\n\n`;
+      docList.forEach((d, idx) => {
+        replyText += `${idx + 1}. **${d.title}** (${d.wordCount || 0} words) — *Modified ${new Date(d.modifiedTime).toLocaleDateString()}*\n`;
+      });
+      return {
+        reply: replyText,
+        steps,
+        engine: 'Workspace Smart Agent (MCP Docs)',
+        toolsCalled: ['docs_list_documents']
+      };
+    }
+
     const titleMatch = userInstruction.match(/titled ['"]([^'"]+)['"]/i) || 
                        userInstruction.match(/title ['"]([^'"]+)['"]/i) || 
                        userInstruction.match(/titled ([^\s]+ [^\s]+)/i);
